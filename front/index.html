@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PadelPro - Sistema de Gestión</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+            padding: 50px 30px;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 2.5em;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 50px;
+            font-size: 1.1em;
+        }
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-top: 40px;
+        }
+        .menu-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            padding: 40px 20px;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            cursor: pointer;
+        }
+        .menu-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .menu-card .icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+        .menu-card h2 {
+            font-size: 1.3em;
+            margin-bottom: 10px;
+        }
+        .menu-card p {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        .menu-card.canchas {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .menu-card.clientes {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        .menu-card.reservas {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        .menu-card.cancelar {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+        @media (max-width: 768px) {
+            .menu-grid {
+                grid-template-columns: 1fr;
+            }
+            h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎾 PadelPro</h1>
+        <p class="subtitle">Sistema de Gestión de Canchas de Pádel</p>
+        
+        <div class="menu-grid">
+            <a href="/abml-canchas" class="menu-card canchas">
+                <div class="icon">🏟️</div>
+                <h2>Gestión de Canchas</h2>
+                <p>Crear, modificar y eliminar canchas</p>
+            </a>
+            
+            <a href="/abml-clientes" class="menu-card clientes">
+                <div class="icon">👥</div>
+                <h2>Gestión de Clientes</h2>
+                <p>Administrar información de clientes</p>
+            </a>
+            
+            <a href="/abml-reservas" class="menu-card reservas">
+                <div class="icon">📅</div>
+                <h2>Gestión de Reservas</h2>
+                <p>Crear y gestionar reservas</p>
+            </a>
+            
+            <a href="/cancelar" class="menu-card cancelar">
+                <div class="icon">🚫</div>
+                <h2>Cancelar Fecha/Horario</h2>
+                <p>Bloquear fechas y horarios</p>
+            </a>
+            
+            <a href="/chat" class="menu-card" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                <div class="icon">🤖</div>
+                <h2>Asistente Virtual</h2>
+                <p>Chatea con nuestro asistente IA</p>
+            </a>
+        </div>
+    </div>
+</body>
+</html>

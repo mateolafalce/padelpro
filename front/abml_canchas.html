@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PadelPro - Gestión de Canchas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            padding: 30px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: bold;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #764ba2;
+        }
+
+        button.delete {
+            background: #e74c3c;
+        }
+
+        button.delete:hover {
+            background: #c0392b;
+        }
+
+        button.edit {
+            background: #f39c12;
+        }
+
+        button.edit:hover {
+            background: #d68910;
+        }
+
+        .canchas-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .cancha-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+
+        .cancha-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .cancha-card h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .cancha-card p {
+            color: #666;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .cancha-card .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .cancha-card button {
+            flex: 1;
+            padding: 8px;
+            font-size: 12px;
+        }
+
+        .form-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .form-container {
+                grid-template-columns: 1fr;
+            }
+
+            .canchas-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .success,
+        .error {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .edit-form {
+            display: none;
+            border: 2px solid #f39c12;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+            background: #fffbf0;
+        }
+
+        .edit-form.active {
+            display: block;
+        }
+
+        .cancel-btn {
+            background: #95a5a6;
+        }
+
+        .cancel-btn:hover {
+            background: #7f8c8d;
+        }
+
+        .horarios-selector {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            background: #f9f9f9;
+        }
+
+        .horario-dia {
+            margin-bottom: 15px;
+        }
+
+        .horario-dia h4 {
+            color: #667eea;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .horario-opciones {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 8px;
+        }
+
+        .horario-opciones label {
+            display: flex;
+            align-items: center;
+            font-weight: normal;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .horario-opciones input[type="checkbox"] {
+            width: auto;
+            margin-right: 5px;
+        }
+
+        .horarios-seleccionados {
+            margin-top: 10px;
+            padding: 10px;
+            background: #e8f4f8;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+
+        .horario-tag {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 3px;
+            margin: 2px;
+            font-size: 11px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🎾 PadelPro - Gestión de Canchas</h1>
+        <a href="/"
+            style="display: inline-block; margin-bottom: 20px; padding: 10px 20px; background: #95a5a6; color: white; text-decoration: none; border-radius: 5px;">←
+            Volver al Menú Principal</a>
+
+        <div id="successMessage" class="success"></div>
+        <div id="errorMessage" class="error"></div>
+
+        <div class="section">
+            <h2>Crear Nueva Cancha</h2>
+            <div class="form-container">
+                <div>
+                    <div class="form-group">
+                        <label for="nombreCancha">Nombre de la Cancha:</label>
+                        <input type="text" id="nombreCancha" placeholder="Ej: Cancha A">
+                    </div>
+                    <div class="form-group">
+                        <label for="cantidadCancha">Cantidad Maxima:</label>
+                        <input type="number" id="cantidadCancha" placeholder="Ej: 1" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="precioCancha">Precio por Hora ($):</label>
+                        <input type="number" id="precioCancha" placeholder="Ej: 2500" min="0" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label for="descripcionCancha">Descripción:</label>
+                        <textarea id="descripcionCancha" placeholder="Descripción de la cancha"></textarea>
+                    </div>
+                    <button onclick="crearCancha()">Crear Cancha</button>
+                </div>
+                <div>
+                    <div class="form-group">
+                        <label>Horarios Disponibles:</label>
+                        <div id="horariosSelector" class="horarios-selector">
+                            <p style="text-align: center; color: #999;">Cargando horarios...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Listado de Canchas</h2>
+            <button onclick="listarCanchas()">Recargar Canchas</button>
+            <div id="canchasContainer" class="canchas-grid" style="margin-top: 20px;"></div>
+        </div>
+    </div>
+
+    <script>
+        let todosHorarios = [];
+
+        // Cargar horarios disponibles
+        function cargarHorarios() {
+            fetch('/canchas/horarios')
+                .then(response => response.json())
+                .then(data => {
+                    todosHorarios = data;
+                    mostrarHorariosSelector();
+                })
+                .catch(error => console.error('Error al cargar horarios:', error));
+        }
+
+        // Mostrar selector de horarios organizados por día
+        function mostrarHorariosSelector() {
+            const container = document.getElementById('horariosSelector');
+            const horariosPorDia = {};
+
+            // Organizar horarios por día
+            todosHorarios.forEach(horario => {
+                if (!horariosPorDia[horario.dia]) {
+                    horariosPorDia[horario.dia] = [];
+                }
+                horariosPorDia[horario.dia].push(horario);
+            });
+
+            // Orden de días
+            const diasOrden = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+
+            container.innerHTML = '';
+            diasOrden.forEach(dia => {
+                if (horariosPorDia[dia]) {
+                    const diaDiv = document.createElement('div');
+                    diaDiv.className = 'horario-dia';
+
+                    const titulo = document.createElement('h4');
+                    titulo.textContent = dia;
+                    diaDiv.appendChild(titulo);
+
+                    const opcionesDiv = document.createElement('div');
+                    opcionesDiv.className = 'horario-opciones';
+
+                    horariosPorDia[dia].forEach(horario => {
+                        const label = document.createElement('label');
+                        const checkbox = document.createElement('input');
+                        checkbox.type = 'checkbox';
+                        checkbox.value = horario.id;
+                        checkbox.className = 'horario-checkbox';
+
+                        label.appendChild(checkbox);
+                        label.appendChild(document.createTextNode(horario.hora));
+                        opcionesDiv.appendChild(label);
+                    });
+
+                    diaDiv.appendChild(opcionesDiv);
+                    container.appendChild(diaDiv);
+                }
+            });
+        }
+
+        // Obtener horarios seleccionados
+        function obtenerHorariosSeleccionados() {
+            const checkboxes = document.querySelectorAll('.horario-checkbox:checked');
+            return Array.from(checkboxes).map(cb => parseInt(cb.value));
+        }
+
+        // Listar todas las canchas
+        function listarCanchas() {
+            fetch('/canchas/')
+                .then(response => response.json())
+                .then(data => {
+                    const container = document.getElementById('canchasContainer');
+                    container.innerHTML = '';
+
+                    if (data.length === 0) {
+                        container.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #999;">No hay canchas disponibles</p>';
+                        return;
+                    }
+
+                    data.forEach(cancha => {
+                        const card = document.createElement('div');
+                        card.className = 'cancha-card';
+
+                        // Mostrar horarios
+                        let horariosHTML = '';
+                        if (cancha.horarios && cancha.horarios.length > 0) {
+                            horariosHTML = '<div class="horarios-seleccionados"><strong>Horarios:</strong><br>';
+                            cancha.horarios.forEach(h => {
+                                horariosHTML += `<span class="horario-tag">${h.dia} ${h.hora}</span>`;
+                            });
+                            horariosHTML += '</div>';
+                        }
+
+                        card.innerHTML = `
+                            <h3>${cancha.nombre}</h3>
+                            <p><strong>ID:</strong> ${cancha.id}</p>
+                            <p><strong>Cantidad:</strong> ${cancha.cantidad}</p>
+                            <p><strong>Precio:</strong> $${cancha.precio || 0}</p>
+                            <p><strong>Descripción:</strong> ${cancha.descripcion || 'Sin descripción'}</p>
+                            ${horariosHTML}
+                            <div class="actions">
+                                <button class="edit" onclick="mostrarFormularioEditar(${cancha.id})">Editar</button>
+                                <button class="delete" onclick="eliminarCancha(${cancha.id}, '${cancha.nombre}')">Eliminar</button>
+                            </div>
+                            <form id="editForm-${cancha.id}" class="edit-form">
+                                <div class="form-group">
+                                    <label>Nombre:</label>
+                                    <input type="text" class="editNombre" value="${cancha.nombre}">
+                                </div>
+                                <div class="form-group">
+                                    <label>Cantidad:</label>
+                                    <input type="number" class="editCantidad" value="${cancha.cantidad}">
+                                </div>
+                                <div class="form-group">
+                                    <label>Precio:</label>
+                                    <input type="number" class="editPrecio" value="${cancha.precio || 0}" step="0.01">
+                                </div>
+                                <div class="form-group">
+                                    <label>Descripción:</label>
+                                    <textarea class="editDescripcion">${cancha.descripcion || ''}</textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label>Horarios:</label>
+                                    <div id="editHorarios-${cancha.id}" class="horarios-selector"></div>
+                                </div>
+                                <button type="button" onclick="guardarEdicion(${cancha.id})">Guardar Cambios</button>
+                                <button type="button" class="cancel-btn" onclick="cancelarEdicion(${cancha.id})">Cancelar</button>
+                            </form>
+                        `;
+                        container.appendChild(card);
+
+                        // Cargar horarios para edición
+                        cargarHorariosEdicion(cancha.id, cancha.horarios || []);
+                    });
+                })
+                .catch(error => mostrarError('Error al cargar canchas: ' + error));
+        }
+
+        // Cargar horarios en el formulario de edición
+        function cargarHorariosEdicion(canchaId, horariosCancha) {
+            const container = document.getElementById(`editHorarios-${canchaId}`);
+            const horariosPorDia = {};
+
+            todosHorarios.forEach(horario => {
+                if (!horariosPorDia[horario.dia]) {
+                    horariosPorDia[horario.dia] = [];
+                }
+                horariosPorDia[horario.dia].push(horario);
+            });
+
+            const diasOrden = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+            const horariosIds = horariosCancha.map(h => h.id);
+
+            container.innerHTML = '';
+            diasOrden.forEach(dia => {
+                if (horariosPorDia[dia]) {
+                    const diaDiv = document.createElement('div');
+                    diaDiv.className = 'horario-dia';
+
+                    const titulo = document.createElement('h4');
+                    titulo.textContent = dia;
+                    diaDiv.appendChild(titulo);
+
+                    const opcionesDiv = document.createElement('div');
+                    opcionesDiv.className = 'horario-opciones';
+
+                    horariosPorDia[dia].forEach(horario => {
+                        const label = document.createElement('label');
+                        const checkbox = document.createElement('input');
+                        checkbox.type = 'checkbox';
+                        checkbox.value = horario.id;
+                        checkbox.className = `horario-checkbox-edit-${canchaId}`;
+                        checkbox.checked = horariosIds.includes(horario.id);
+
+                        label.appendChild(checkbox);
+                        label.appendChild(document.createTextNode(horario.hora));
+                        opcionesDiv.appendChild(label);
+                    });
+
+                    diaDiv.appendChild(opcionesDiv);
+                    container.appendChild(diaDiv);
+                }
+            });
+        }
+
+        // Crear cancha
+        function crearCancha() {
+            const nombre = document.getElementById('nombreCancha').value;
+            const cantidad = document.getElementById('cantidadCancha').value;
+            const precio = document.getElementById('precioCancha').value;
+            const descripcion = document.getElementById('descripcionCancha').value;
+            const horarios = obtenerHorariosSeleccionados();
+
+            if (!nombre || !cantidad) {
+                mostrarError('Por favor completa los campos requeridos');
+                return;
+            }
+
+            fetch('/canchas/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    nombre: nombre,
+                    cantidad: parseInt(cantidad),
+                    precio: parseFloat(precio || 0),
+                    descripcion: descripcion,
+                    horarios: horarios
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.mensaje) {
+                        mostrarExito('Cancha creada exitosamente');
+                        document.getElementById('nombreCancha').value = '';
+                        document.getElementById('cantidadCancha').value = '';
+                        document.getElementById('precioCancha').value = '';
+                        document.getElementById('descripcionCancha').value = '';
+                        // Desmarcar todos los checkboxes
+                        document.querySelectorAll('.horario-checkbox').forEach(cb => cb.checked = false);
+                        listarCanchas();
+                    } else {
+                        mostrarError(data.error || 'Error al crear la cancha');
+                    }
+                })
+                .catch(error => mostrarError('Error: ' + error));
+        }
+
+        // Mostrar formulario de edición
+        function mostrarFormularioEditar(id) {
+            const form = document.getElementById('editForm-' + id);
+            form.classList.add('active');
+        }
+
+        // Cancelar edición
+        function cancelarEdicion(id) {
+            const form = document.getElementById('editForm-' + id);
+            form.classList.remove('active');
+        }
+
+        // Guardar edición
+        function guardarEdicion(id) {
+            const form = document.getElementById('editForm-' + id);
+            const nombre = form.querySelector('.editNombre').value;
+            const cantidad = form.querySelector('.editCantidad').value;
+            const precio = form.querySelector('.editPrecio').value;
+            const descripcion = form.querySelector('.editDescripcion').value;
+
+            // Obtener horarios seleccionados del formulario de edición
+            const checkboxes = document.querySelectorAll(`.horario-checkbox-edit-${id}:checked`);
+            const horarios = Array.from(checkboxes).map(cb => parseInt(cb.value));
+
+            if (!nombre || !cantidad) {
+                mostrarError('Por favor completa los campos requeridos');
+                return;
+            }
+
+            fetch('/canchas/' + id, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    nombre: nombre,
+                    cantidad: parseInt(cantidad),
+                    precio: parseFloat(precio || 0),
+                    descripcion: descripcion,
+                    horarios: horarios
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.mensaje) {
+                        mostrarExito('Cancha modificada exitosamente');
+                        listarCanchas();
+                    } else {
+                        mostrarError(data.error || 'Error al modificar la cancha');
+                    }
+                })
+                .catch(error => mostrarError('Error: ' + error));
+        }
+
+        // Eliminar cancha
+        function eliminarCancha(id, nombre) {
+            if (confirm('¿Estás seguro de que deseas eliminar la cancha "' + nombre + '"?')) {
+                fetch('/canchas/' + id, {
+                    method: 'DELETE'
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.mensaje) {
+                            mostrarExito('Cancha eliminada exitosamente');
+                            listarCanchas();
+                        } else {
+                            mostrarError(data.error || 'Error al eliminar la cancha');
+                        }
+                    })
+                    .catch(error => mostrarError('Error: ' + error));
+            }
+        }
+
+        // Mostrar mensajes
+        function mostrarExito(mensaje) {
+            const div = document.getElementById('successMessage');
+            div.textContent = mensaje;
+            div.style.display = 'block';
+            setTimeout(() => {
+                div.style.display = 'none';
+            }, 4000);
+        }
+
+        function mostrarError(mensaje) {
+            const div = document.getElementById('errorMessage');
+            div.textContent = mensaje;
+            div.style.display = 'block';
+            setTimeout(() => {
+                div.style.display = 'none';
+            }, 4000);
+        }
+
+        // Cargar horarios y canchas al iniciar
+        cargarHorarios();
+        listarCanchas();
+    </script>
+</body>
+
+</html>

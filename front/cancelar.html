@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Bloqueos - PadelPro</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg: #f9fafb;
+            --surface: #ffffff;
+            --text: #111827;
+            --grid-line: #e5e7eb;
+            --available: #d1fae5;
+            --available-text: #065f46;
+            --blocked: #fee2e2;
+            --blocked-text: #991b1b;
+            --reserved: #dbeafe;
+            --reserved-text: #1e40af;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+        }
+
+        .controls {
+            background: var(--surface);
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .date-input {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--grid-line);
+            border-radius: 8px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .date-input:focus {
+            border-color: var(--primary);
+        }
+
+        .grid-container {
+            background: var(--surface);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+
+        th,
+        td {
+            padding: 1rem;
+            text-align: center;
+            border-bottom: 1px solid var(--grid-line);
+        }
+
+        th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: #64748b;
+        }
+
+        td:first-child {
+            font-weight: 600;
+            background: #f8fafc;
+            position: sticky;
+            left: 0;
+            z-index: 10;
+        }
+
+        .slot {
+            padding: 0.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .slot.disponible {
+            background-color: var(--available);
+            color: var(--available-text);
+        }
+
+        .slot.disponible:hover {
+            opacity: 0.8;
+            transform: scale(1.02);
+        }
+
+        .slot.bloqueada {
+            background-color: var(--blocked);
+            color: var(--blocked-text);
+        }
+
+        .slot.bloqueada:hover {
+            opacity: 0.8;
+            transform: scale(1.02);
+        }
+
+        .slot.iniciada,
+        .slot.ejecutada {
+            background-color: var(--reserved);
+            color: var(--reserved-text);
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 1.5rem;
+            font-size: 0.875rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        /* Toast notifications */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: #333;
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Administración de Canchas</h1>
+            <p>Seleccione una fecha para bloquear o desbloquear horarios.</p>
+        </header>
+
+        <div class="controls">
+            <label for="fecha">Fecha:</label>
+            <input type="date" id="fecha" class="date-input">
+        </div>
+
+        <div class="grid-container">
+            <table id="scheduleTable">
+                <thead>
+                    <tr id="headerRow">
+                        <th>Horario</th>
+                        <!-- Canchas headers will be injected here -->
+                    </tr>
+                </thead>
+                <tbody id="scheduleBody">
+                    <!-- Rows will be injected here -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="dot" style="background: var(--available)"></div>
+                <span>Disponible (Click para bloquear)</span>
+            </div>
+            <div class="legend-item">
+                <div class="dot" style="background: var(--blocked)"></div>
+                <span>Bloqueada (Click para desbloquear)</span>
+            </div>
+            <div class="legend-item">
+                <div class="dot" style="background: var(--reserved)"></div>
+                <span>Reservada (No editable)</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast">Acción completada</div>
+
+    <script>
+        const fechaInput = document.getElementById('fecha');
+        const scheduleTable = document.getElementById('scheduleTable');
+        const headerRow = document.getElementById('headerRow');
+        const scheduleBody = document.getElementById('scheduleBody');
+        const toast = document.getElementById('toast');
+
+        // Set today as default
+        fechaInput.valueAsDate = new Date();
+
+        fechaInput.addEventListener('change', loadSchedule);
+
+        async function loadSchedule() {
+            const fecha = fechaInput.value;
+            if (!fecha) return;
+
+            try {
+                const response = await fetch(`/api/cancelar/horarios_fecha?fecha=${fecha}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    renderTable(data.horarios);
+                } else {
+                    showToast('Error al cargar horarios: ' + data.error);
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Error de conexión');
+            }
+        }
+
+        function renderTable(horarios) {
+            // Clear current table
+            scheduleBody.innerHTML = '';
+
+            // Setup Headers if not already set (assuming canchas don't change often, but safer to rebuild)
+            // Extract canchas from first row
+            if (horarios.length > 0) {
+                const canchas = horarios[0].canchas;
+                headerRow.innerHTML = '<th>Horario</th>';
+                canchas.forEach(c => {
+                    const th = document.createElement('th');
+                    th.textContent = c.cancha_nombre;
+                    headerRow.appendChild(th);
+                });
+            }
+
+            // Build Rows
+            horarios.forEach(h => {
+                const tr = document.createElement('tr');
+
+                // Time cell
+                const timeTd = document.createElement('td');
+                // Mostrar el rango completo recibido del backend (ej: 08:00-09:00)
+                timeTd.textContent = h.hora;
+                tr.appendChild(timeTd);
+
+                // Slot cells
+                h.canchas.forEach(c => {
+                    const td = document.createElement('td');
+                    const div = document.createElement('div');
+                    div.className = `slot ${c.estado}`;
+                    div.textContent = formatState(c.estado);
+
+                    if (c.estado === 'disponible' || c.estado === 'bloqueada') {
+                        div.onclick = () => toggleSlot(c.cancha_id, h.hora, c.estado);
+                    }
+
+                    td.appendChild(div);
+                    tr.appendChild(td);
+                });
+
+                scheduleBody.appendChild(tr);
+            });
+        }
+
+        function formatState(state) {
+            if (state === 'disponible') return 'Disponible';
+            if (state === 'bloqueada') return 'Bloqueada';
+            if (state === 'iniciada' || state === 'ejecutada') return 'Reservada';
+            return state;
+        }
+
+        async function toggleSlot(canchaId, hora, currentState) {
+            const fecha = fechaInput.value;
+
+            try {
+                const response = await fetch('/api/cancelar/toggle', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        cancha_id: canchaId,
+                        fecha: fecha,
+                        hora: hora
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast(currentState === 'disponible' ? 'Horario bloqueado' : 'Horario habilitado');
+                    loadSchedule(); // Reload to reflect changes
+                } else {
+                    showToast('Error: ' + data.error);
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Error de conexión');
+            }
+        }
+
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Initial load
+        loadSchedule();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PadelPro - ABML Reservas</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    .container {
+      max-width: 1100px;
+      width: 100%;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
+      padding: 30px;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+    }
+
+    .subtitle {
+      color: #555;
+      margin-bottom: 20px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .card {
+      background: #f9fbfd;
+      border: 1px solid #e3e8ef;
+      border-radius: 10px;
+      padding: 20px;
+    }
+
+    .card h2 {
+      margin-top: 0;
+    }
+
+    label {
+      display: block;
+      margin: 8px 0 4px;
+      font-size: 0.9rem;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #d0d7de;
+      border-radius: 6px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    button {
+      padding: 10px 14px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    button.primary {
+      background: #4f46e5;
+      color: #fff;
+    }
+
+    button.secondary {
+      background: #059669;
+      color: #fff;
+    }
+
+    button.warn {
+      background: #ef4444;
+      color: #fff;
+    }
+
+    button.light {
+      background: #e5e7eb;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 10px;
+      text-align: left;
+    }
+
+    th {
+      background: #f3f4f6;
+    }
+
+    .status {
+      font-weight: bold;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+    }
+
+    .badge.iniciada {
+      background: #e0e7ff;
+      color: #3730a3;
+    }
+
+    .badge.cancelada {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .badge.otro {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    .toast {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      background: #111827;
+      color: #fff;
+      padding: 12px 14px;
+      border-radius: 8px;
+      display: none;
+    }
+
+    .nav {
+      margin-bottom: 16px;
+    }
+
+    .nav a {
+      text-decoration: none;
+      color: #111827;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="nav"><a href="/">← Volver al inicio</a></div>
+    <h1>📅 ABML de Reservas</h1>
+    <p class="subtitle">Crear, listar, actualizar, eliminar, cancelar y verificar disponibilidad.</p>
+
+    <div class="grid">
+      <div class="card">
+        <h2>Crear Reserva</h2>
+        <label>Cancha</label>
+        <input id="crear-cancha" placeholder="Nombre de la cancha" />
+        <div class="row">
+          <div>
+            <label>Fecha</label>
+            <input id="crear-fecha" type="date" />
+          </div>
+          <div>
+            <label>Hora</label>
+            <input id="crear-hora" type="time" />
+          </div>
+        </div>
+        <div class="actions">
+          <button class="light" id="btn-disponibilidad">Verificar disponibilidad</button>
+          <button class="primary" id="btn-crear">Crear reserva</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Actualizar / Cancelar</h2>
+        <label>ID de reserva</label>
+        <input id="upd-id" type="number" placeholder="Ej: 1" />
+        <label>Cancha (opcional)</label>
+        <input id="upd-cancha" placeholder="Nuevo nombre de cancha" />
+        <div class="row">
+          <div>
+            <label>Fecha (opcional)</label>
+            <input id="upd-fecha" type="date" />
+          </div>
+          <div>
+            <label>Hora (opcional)</label>
+            <input id="upd-hora" type="time" />
+          </div>
+        </div>
+        <div class="actions">
+          <button class="secondary" id="btn-actualizar">Actualizar</button>
+          <button class="warn" id="btn-cancelar">Cancelar</button>
+          <button class="light" id="btn-eliminar">Eliminar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:20px;">
+      <h2>Listado de Reservas</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Fecha</th>
+            <th>Hora</th>
+            <th>Cancha</th>
+            <th>Cliente</th>
+            <th>Monto</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-reservas"></tbody>
+      </table>
+      <div class="actions" style="margin-top:12px;">
+        <button class="light" id="btn-refrescar">Refrescar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    const API = '/api/reservas';
+    const toast = (msg, ok = true) => {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.style.background = ok ? '#111827' : '#991b1b';
+      el.style.display = 'block';
+      setTimeout(() => el.style.display = 'none', 2500);
+    };
+
+    const fmtBadge = (estado) => {
+      if (!estado) return '<span class="badge otro">N/A</span>';
+      const cls = estado === 'iniciada' ? 'iniciada' : (estado === 'cancelada' ? 'cancelada' : 'otro');
+      return `<span class="badge ${cls}">${estado}</span>`;
+    };
+
+    async function listar() {
+      try {
+        const r = await fetch(`${API}/`);
+        const j = await r.json();
+        if (!j.success) throw new Error(j.error || 'Error al listar');
+        const tbody = document.getElementById('tabla-reservas');
+        tbody.innerHTML = j.reservas.map(x => `
+          <tr>
+            <td>${x.id}</td>
+            <td>${x.fecha}</td>
+            <td>${x.hora}</td>
+            <td>${x.cancha ?? ''}</td>
+            <td>${x.cliente ?? ''}</td>
+            <td>$${x.monto || 0}</td>
+            <td>${fmtBadge(x.estado)}</td>
+            <td>
+              <button class="light" onclick="prefill(${x.id}, '${x.cancha ?? ''}', '${x.fecha}', '${x.hora}')">Editar</button>
+            </td>
+          </tr>
+        `).join('');
+      } catch (e) {
+        toast(e.message, false);
+      }
+    }
+
+    function prefill(id, cancha, fecha, hora) {
+      document.getElementById('upd-id').value = id;
+      document.getElementById('upd-cancha').value = cancha || '';
+      document.getElementById('upd-fecha').value = fecha || '';
+      document.getElementById('upd-hora').value = hora || '';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function disponibilidad() {
+      const cancha = document.getElementById('crear-cancha').value.trim();
+      const fecha = document.getElementById('crear-fecha').value;
+      const hora = document.getElementById('crear-hora').value;
+      if (!cancha || !fecha || !hora) return toast('Completa cancha, fecha y hora', false);
+      try {
+        const r = await fetch(`${API}/disponibilidad`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cancha_nombre: cancha, fecha, hora })
+        });
+        const j = await r.json();
+        if (!j.success) throw new Error(j.error || 'Error');
+        toast(j.mensaje || (j.disponible ? 'Disponible' : 'No disponible'), j.disponible);
+      } catch (e) {
+        toast(e.message, false);
+      }
+    }
+
+    async function crear() {
+      const cancha = document.getElementById('crear-cancha').value.trim();
+      const fecha = document.getElementById('crear-fecha').value;
+      const hora = document.getElementById('crear-hora').value;
+      if (!cancha || !fecha || !hora) return toast('Completa cancha, fecha y hora', false);
+      try {
+        const r = await fetch(`${API}/`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cancha_nombre: cancha, fecha, hora })
+        });
+        const j = await r.json();
+        if (!j.exito) throw new Error(j.error || 'No se pudo crear');
+        toast(j.mensaje || 'Reserva creada');
+        listar();
+      } catch (e) { toast(e.message, false); }
+    }
+
+    async function actualizar() {
+      const id = Number(document.getElementById('upd-id').value);
+      if (!id) return toast('Indica el ID de la reserva', false);
+      const cancha = document.getElementById('upd-cancha').value.trim();
+      const fecha = document.getElementById('upd-fecha').value;
+      const hora = document.getElementById('upd-hora').value;
+      try {
+        const r = await fetch(`${API}/${id}`, {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cancha_nombre: cancha || undefined, fecha: fecha || undefined, hora: hora || undefined })
+        });
+        const j = await r.json();
+        if (!j.success) throw new Error(j.error || 'No se pudo actualizar');
+        toast(j.mensaje || 'Reserva actualizada');
+        listar();
+      } catch (e) { toast(e.message, false); }
+    }
+
+    async function cancelar() {
+      const id = Number(document.getElementById('upd-id').value);
+      if (!id) return toast('Indica el ID de la reserva', false);
+      try {
+        const r = await fetch(`${API}/${id}/cancelar`, { method: 'POST' });
+        const j = await r.json();
+        if (!j.success) throw new Error(j.error || 'No se pudo cancelar');
+        toast(j.mensaje || 'Reserva cancelada');
+        listar();
+      } catch (e) { toast(e.message, false); }
+    }
+
+    async function eliminar() {
+      const id = Number(document.getElementById('upd-id').value);
+      if (!id) return toast('Indica el ID de la reserva', false);
+      try {
+        const r = await fetch(`${API}/${id}`, { method: 'DELETE' });
+        const j = await r.json();
+        if (!j.success) throw new Error(j.error || 'No se pudo eliminar');
+        toast(j.mensaje || 'Reserva eliminada');
+        listar();
+      } catch (e) { toast(e.message, false); }
+    }
+
+    document.getElementById('btn-refrescar').addEventListener('click', listar);
+    document.getElementById('btn-disponibilidad').addEventListener('click', disponibilidad);
+    document.getElementById('btn-crear').addEventListener('click', crear);
+    document.getElementById('btn-actualizar').addEventListener('click', actualizar);
+    document.getElementById('btn-cancelar').addEventListener('click', cancelar);
+    document.getElementById('btn-eliminar').addEventListener('click', eliminar);
+
+    listar();
+  </script>
+</body>
+
+</html>
