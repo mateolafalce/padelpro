@@ -68,6 +68,15 @@ chat quiero que implmenetes el webhook para poder ejecutar este chat mediante wa
 
 quiero que al confirmar la reserva, se envie un mensaje con el monto a pagar, el CBU y el alias al que hay que transferir el dinero
 
+chat quiero que implementes en la base de datos un modulo el cual se dedique a llevar registro de las conversaciones de los usuarios (identificados con el numero de celular, o si es local con el numero 99999999). Tabla: Conversaciones (id, fecha, usuario, mensaje). quiero que cada vez que se envie un mensaje tanto localmente como desde wasap que se registre el mensaje. Pueden haber 2 usuarios, o el LLM o el cliente como tal. Por lo tanto, cuando se necesite utilizar la conversacion que hay en el chat ya no se pasa mas desde el front, ahora se consultan los ultimos 10 mensajes que hay en la BD para añadir mas contexto.
+
+TODO: 
+- Implementar sistema de pago basado en QR para poder cobrar mensualmente
+- Gestionar el historial de conversaciones haciendo uso de la base de datos
+- Listar de a X usuarios
+
+
+
 
 Hola Buenas Tardes. Mateo, un gusto
 
@@ -77,4 +86,4 @@ Esta diseñado para integrarse con wasap de manera que se pueda reservar una can
 
 Queria consultarle por un feedback sin compromiso sobre el mismo. Saber principalmente si el workflow del programa se condice con la realidad, al momento de reservar una cancha en Padel Pro.
 
-Gracias
+Gracias y saludos

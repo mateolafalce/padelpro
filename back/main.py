@@ -10,6 +10,8 @@ from chat_bp import chat_bp
 from abml_reservas import reservas_bp
 from cancelar_horario import cancelar_bp
 from wsp import wsp_bp
+from admin_config import admin_bp
+from historial_bp import historial_bp
 
 app = Flask(__name__)
 
@@ -25,6 +27,8 @@ app.register_blueprint(chat_bp)
 app.register_blueprint(reservas_bp)
 app.register_blueprint(cancelar_bp)
 app.register_blueprint(wsp_bp)
+app.register_blueprint(admin_bp)
+app.register_blueprint(historial_bp)
 
 # Ruta a la carpeta front
 FRONT_FOLDER = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'front')
@@ -52,6 +56,10 @@ def cancelar():
 @app.route('/chat')
 def chat():
 	return send_from_directory(FRONT_FOLDER, 'chat.html')
+
+@app.route('/admin')
+def admin():
+	return send_from_directory(FRONT_FOLDER, 'admin.html')
 
 if __name__ == '__main__':
 	app.run(debug=True, host='0.0.0.0', port=8080)

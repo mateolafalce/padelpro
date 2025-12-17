@@ -16,8 +16,6 @@ model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 business_kind = os.getenv("BUSINESS_KIND", "PadelPro")
 business_name = os.getenv("BUSINESS_NAME", "Complejo de Padel")
 business_address = os.getenv("BUSINESS_ADDRESS", "69 entre 119 y 120")
-cbu = os.getenv("CBU", "")
-alias = os.getenv("ALIAS", "")
 
 # Horarios válidos del sistema (rangos)
 HORARIOS_VALIDOS = ['08:00-09:00', '10:00-11:00', '12:00-13:00', '14:00-15:00', 
@@ -68,7 +66,29 @@ def build_system_prompt(canchas: list[dict]) -> str:
     fecha_actual = datetime.now().strftime('%Y-%m-%d')
     dia_actual = datetime.now().strftime('%A %d de %B de %Y')
     
-    system_prompt = f"""Eres un agente de atención al cliente para {business_name}, un {business_kind} ubicado en {business_address}.
+    # Obtener toda la configuración desde la base de datos
+    from bd import Configuracion
+    try:
+        cbu_config = Configuracion.query.filter_by(clave='cbu').first()
+        alias_config = Configuracion.query.filter_by(clave='alias').first()
+        business_name_config = Configuracion.query.filter_by(clave='business_name').first()
+        business_kind_config = Configuracion.query.filter_by(clave='business_kind').first()
+        business_address_config = Configuracion.query.filter_by(clave='business_address').first()
+        
+        cbu_actual = cbu_config.valor if cbu_config and cbu_config.valor else ''
+        alias_actual = alias_config.valor if alias_config and alias_config.valor else ''
+        business_name_actual = business_name_config.valor if business_name_config and business_name_config.valor else business_name
+        business_kind_actual = business_kind_config.valor if business_kind_config and business_kind_config.valor else business_kind
+        business_address_actual = business_address_config.valor if business_address_config and business_address_config.valor else business_address
+    except:
+        # Si hay error al consultar la BD, usar valores del .env
+        cbu_actual = os.getenv("CBU", "")
+        alias_actual = os.getenv("ALIAS", "")
+        business_name_actual = business_name
+        business_kind_actual = business_kind
+        business_address_actual = business_address
+    
+    system_prompt = f"""Eres un agente de atención al cliente para {business_name_actual}, un {business_kind_actual} ubicado en {business_address_actual}.
 
 FECHA ACTUAL: {dia_actual} ({fecha_actual})
 
@@ -81,7 +101,7 @@ INSTRUCCIONES IMPORTANTES:
 - Si la cancha está disponible, NO reserves automáticamente. En su lugar, PRESENTA un resumen claro de los datos de la reserva (Cancha, Fecha, Hora, Precio) y PREGUNTA al usuario si desea confirmar la reserva.
 - Cuando hables de una cancha, menciona su precio también.
 - SOLO cuando el usuario confirme explícitamente (diga "sí", "confirmar", "dale", etc.), llama a la función crear_reserva.
-- Solo después de que crear_reserva retorne éxito, confirmá al cliente que la reserva fue completada. ADEMÁS, debes enviar un mensaje con el detalle del pago: Menciona el monto a pagar, el CBU ({cbu}) y el Alias ({alias}) para realizar la transferencia.
+- Solo después de que crear_reserva retorne éxito, confirmá al cliente que la reserva fue completada. ADEMÁS, debes enviar un mensaje con el detalle del pago: Menciona el monto a pagar, el CBU ({cbu_actual}) y el Alias ({alias_actual}) para realizar la transferencia.
 - Sé proactivo en ayudar a encontrar alternativas si no hay disponibilidad.
 - Los horarios de reserva son ESTRICTOS y ÚNICOS. Debes usar EXACTAMENTE uno de los siguientes rangos para el parámetro 'hora' en las funciones: {", ".join(HORARIOS_VALIDOS)}. No inventes otros horarios ni uses formato HH:MM simple si puedes evitarlo.
 

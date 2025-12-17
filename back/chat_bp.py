@@ -3,8 +3,12 @@ from ai import chat_with_assistant
 from bd import db, Cancha, CanchaHorario, Horario
 from datetime import datetime, timedelta
 from abml_reservas import verificar_disponibilidad, crear_reserva
+from historial_utils import guardar_mensaje, obtener_historial, limpiar_historial_antiguo
 
 chat_bp = Blueprint('chat', __name__, url_prefix='/api/chat')
+
+# Usuario local por defecto
+USUARIO_LOCAL = '99999999'
 
 @chat_bp.route('/message', methods=['POST'])
 def send_message():
@@ -15,7 +19,14 @@ def send_message():
             return jsonify({'error': 'El mensaje es requerido'}), 400
         
         user_message = data['message']
-        conversation_history = data.get('history', [])
+        # El usuario puede ser especificado o usar el local por defecto
+        usuario = data.get('usuario', USUARIO_LOCAL)
+        
+        # Guardar el mensaje del usuario en la BD
+        guardar_mensaje(usuario, 'user', user_message)
+        
+        # Obtener el historial de conversación desde la BD (últimos 10 mensajes)
+        conversation_history = obtener_historial(usuario, limite=10)
         
         # Obtener información de las canchas desde la BD
         canchas = Cancha.query.all()
@@ -49,12 +60,19 @@ def send_message():
             crear_reserva_func=crear_reserva
         )
         
+        # Guardar la respuesta del asistente en la BD
+        guardar_mensaje(usuario, 'assistant', response)
+        
+        # Limpiar historial antiguo (mantener solo últimos 50 mensajes)
+        limpiar_historial_antiguo(usuario, mantener_ultimos=50)
+        
         return jsonify({
             'response': response,
             'success': True
         }), 200
         
     except Exception as e:
+        print(f"Error en chat: {e}")
         return jsonify({
             'error': str(e),
             'success': False

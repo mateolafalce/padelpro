@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administración - PadelPro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 700px;
+            width: 100%;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 50px 40px;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .header .icon {
+            font-size: 1.2em;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .form-group {
+            margin-bottom: 30px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: all 0.3s;
+            background: #f8f9fa;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-group .hint {
+            color: #888;
+            font-size: 0.9em;
+            margin-top: 8px;
+            display: block;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 40px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+        }
+
+        .btn-primary:active {
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+            transform: translateY(-2px);
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+
+        .current-values {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .current-values h3 {
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .current-values .value-item {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        .current-values .value-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .current-values .value-label {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .current-values .value-text {
+            font-family: 'Courier New', monospace;
+            font-size: 1.1em;
+            word-break: break-all;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 30px 20px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><span class="icon">⚙️</span> Administración</h1>
+            <p>Configuración del Sistema</p>
+        </div>
+
+        <div id="alert" class="alert"></div>
+
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 15px; color: #666;">Cargando...</p>
+        </div>
+
+        <div id="currentValues" class="current-values" style="display: none;">
+            <h3>📊 Configuración Actual</h3>
+            <div class="value-item">
+                <div class="value-label">Nombre del Negocio:</div>
+                <div class="value-text" id="currentBusinessName">-</div>
+            </div>
+            <div class="value-item">
+                <div class="value-label">Tipo de Negocio:</div>
+                <div class="value-text" id="currentBusinessKind">-</div>
+            </div>
+            <div class="value-item">
+                <div class="value-label">Ubicación:</div>
+                <div class="value-text" id="currentBusinessAddress">-</div>
+            </div>
+            <div class="value-item">
+                <div class="value-label">CBU:</div>
+                <div class="value-text" id="currentCBU">-</div>
+            </div>
+            <div class="value-item">
+                <div class="value-label">Alias:</div>
+                <div class="value-text" id="currentAlias">-</div>
+            </div>
+        </div>
+
+        <form id="configForm">
+            <div class="form-group">
+                <label for="business_name">🏢 Nombre del Negocio</label>
+                <input type="text" id="business_name" name="business_name" placeholder="Ej: Complejo de Padel"
+                    maxlength="100" required>
+                <span class="hint">Nombre de tu establecimiento</span>
+            </div>
+
+            <div class="form-group">
+                <label for="business_kind">🎾 Tipo de Negocio</label>
+                <input type="text" id="business_kind" name="business_kind" placeholder="Ej: PadelPro, Club de Padel"
+                    maxlength="100" required>
+                <span class="hint">Categoría o tipo de tu negocio</span>
+            </div>
+
+            <div class="form-group">
+                <label for="business_address">📍 Ubicación</label>
+                <input type="text" id="business_address" name="business_address"
+                    placeholder="Ej: Calle 69 entre 119 y 120" maxlength="200" required>
+                <span class="hint">Dirección física del establecimiento</span>
+            </div>
+
+            <div class="form-group">
+                <label for="cbu">💳 CBU (Clave Bancaria Uniforme)</label>
+                <input type="text" id="cbu" name="cbu" placeholder="Ingrese el CBU (22 dígitos)" maxlength="22"
+                    pattern="[0-9]{22}">
+                <span class="hint">Debe contener exactamente 22 dígitos numéricos</span>
+            </div>
+
+            <div class="form-group">
+                <label for="alias">🏷️ Alias</label>
+                <input type="text" id="alias" name="alias" placeholder="Ingrese el alias (ej: padelpro.pagos)"
+                    maxlength="50">
+                <span class="hint">Alias de la cuenta para facilitar las transferencias</span>
+            </div>
+
+            <div class="button-group">
+                <a href="/" class="btn btn-secondary">← Volver al Inicio</a>
+                <button type="submit" class="btn btn-primary">💾 Guardar Configuración</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Cargar configuración actual al iniciar
+        document.addEventListener('DOMContentLoaded', function () {
+            cargarConfiguracion();
+        });
+
+        // Función para mostrar alertas
+        function mostrarAlerta(mensaje, tipo) {
+            const alert = document.getElementById('alert');
+            alert.textContent = mensaje;
+            alert.className = 'alert alert-' + tipo;
+            alert.style.display = 'block';
+
+            // Ocultar después de 5 segundos
+            setTimeout(() => {
+                alert.style.display = 'none';
+            }, 5000);
+        }
+
+        // Función para cargar la configuración actual
+        async function cargarConfiguracion() {
+            const loading = document.getElementById('loading');
+            const currentValues = document.getElementById('currentValues');
+
+            loading.style.display = 'block';
+
+            try {
+                const response = await fetch('/api/configuracion');
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('currentBusinessName').textContent = data.business_name || 'No configurado';
+                    document.getElementById('currentBusinessKind').textContent = data.business_kind || 'No configurado';
+                    document.getElementById('currentBusinessAddress').textContent = data.business_address || 'No configurado';
+                    document.getElementById('currentCBU').textContent = data.cbu || 'No configurado';
+                    document.getElementById('currentAlias').textContent = data.alias || 'No configurado';
+
+                    document.getElementById('business_name').value = data.business_name || '';
+                    document.getElementById('business_kind').value = data.business_kind || '';
+                    document.getElementById('business_address').value = data.business_address || '';
+                    document.getElementById('cbu').value = data.cbu || '';
+                    document.getElementById('alias').value = data.alias || '';
+
+                    currentValues.style.display = 'block';
+                } else {
+                    mostrarAlerta('Error al cargar la configuración: ' + data.error, 'error');
+                }
+            } catch (error) {
+                mostrarAlerta('Error de conexión: ' + error.message, 'error');
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        // Manejar el envío del formulario
+        document.getElementById('configForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const business_name = document.getElementById('business_name').value.trim();
+            const business_kind = document.getElementById('business_kind').value.trim();
+            const business_address = document.getElementById('business_address').value.trim();
+            const cbu = document.getElementById('cbu').value.trim();
+            const alias = document.getElementById('alias').value.trim();
+
+            // Validación básica
+            if (!business_name || !business_kind || !business_address) {
+                mostrarAlerta('El nombre, tipo y ubicación del negocio son obligatorios', 'error');
+                return;
+            }
+
+            // Validación básica
+            if (cbu && cbu.length !== 22) {
+                mostrarAlerta('El CBU debe tener exactamente 22 dígitos', 'error');
+                return;
+            }
+
+            if (cbu && !/^\d+$/.test(cbu)) {
+                mostrarAlerta('El CBU solo puede contener números', 'error');
+                return;
+            }
+
+            const loading = document.getElementById('loading');
+            loading.style.display = 'block';
+
+            try {
+                const response = await fetch('/api/configuracion', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ business_name, business_kind, business_address, cbu, alias })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    mostrarAlerta('✅ ' + data.message, 'success');
+                    // Recargar los valores actuales
+                    await cargarConfiguracion();
+                } else {
+                    mostrarAlerta('❌ Error: ' + data.error, 'error');
+                }
+            } catch (error) {
+                mostrarAlerta('❌ Error de conexión: ' + error.message, 'error');
+            } finally {
+                loading.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+
+</html>

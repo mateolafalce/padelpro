@@ -5,6 +5,7 @@ import json
 from ai import chat_with_assistant
 from bd import db, Cancha, CanchaHorario, Horario
 from abml_reservas import verificar_disponibilidad, crear_reserva
+from historial_utils import guardar_mensaje, obtener_historial, limpiar_historial_antiguo
 
 wsp_bp = Blueprint('whatsapp', __name__, url_prefix='/api/whatsapp')
 
@@ -12,9 +13,6 @@ wsp_bp = Blueprint('whatsapp', __name__, url_prefix='/api/whatsapp')
 WHATSAPP_TOKEN = os.getenv('WHATSAPP_TOKEN')
 WHATSAPP_PHONE_NUMBER_ID = os.getenv('WHATSAPP_PHONE_NUMBER_ID')
 VERIFY_TOKEN = os.getenv('WHATSAPP_VERIFY_TOKEN', 'padelpro_verify_token_2024')
-
-# Almacenamiento temporal de conversaciones (en producción usar Redis o DB)
-conversation_store = {}
 
 def get_canchas_info():
     """Obtener información de las canchas desde la BD"""
@@ -138,16 +136,15 @@ def webhook():
                     user_message = message['text']['body']
                     message_id = message['id']
                     
-                    # Obtener o crear historial de conversación
-                    if from_number not in conversation_store:
-                        conversation_store[from_number] = []
+                    # Guardar el mensaje del usuario en la BD
+                    guardar_mensaje(from_number, 'user', user_message)
                     
-                    conversation_history = conversation_store[from_number]
+                    # Obtener historial de conversación desde la BD (últimos 10 mensajes)
+                    conversation_history = obtener_historial(from_number, limite=10)
                     
                     # Obtener información de canchas
                     canchas_info = get_canchas_info()
                     
-                    # Obtener respuesta del asistente
                     # Wrapper para inyectar el teléfono en crear_reserva
                     def crear_reserva_wrapper(**kwargs):
                          kwargs['telefono'] = from_number
@@ -162,19 +159,11 @@ def webhook():
                         crear_reserva_func=crear_reserva_wrapper
                     )
                     
-                    # Actualizar historial
-                    conversation_store[from_number].append({
-                        "role": "user",
-                        "content": user_message
-                    })
-                    conversation_store[from_number].append({
-                        "role": "assistant",
-                        "content": response
-                    })
+                    # Guardar la respuesta del asistente en la BD
+                    guardar_mensaje(from_number, 'assistant', response)
                     
-                    # Limitar historial a últimos 20 mensajes (10 intercambios)
-                    if len(conversation_store[from_number]) > 20:
-                        conversation_store[from_number] = conversation_store[from_number][-20:]
+                    # Limpiar historial antiguo (mantener solo últimos 50 mensajes)
+                    limpiar_historial_antiguo(from_number, mantener_ultimos=50)
                     
                     # Enviar respuesta
                     send_whatsapp_message(from_number, response)
@@ -209,8 +198,12 @@ def send_message():
 @wsp_bp.route('/clear-history/<phone_number>', methods=['DELETE'])
 def clear_history(phone_number):
     """Limpiar historial de conversación de un número"""
-    if phone_number in conversation_store:
-        del conversation_store[phone_number]
+    try:
+        from bd import Conversacion
+        # Eliminar todos los mensajes de este usuario
+        Conversacion.query.filter_by(usuario=phone_number).delete()
+        db.session.commit()
         return jsonify({'status': 'cleared', 'success': True}), 200
-    else:
-        return jsonify({'status': 'not_found', 'success': False}), 404
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'status': 'error', 'message': str(e), 'success': False}), 500

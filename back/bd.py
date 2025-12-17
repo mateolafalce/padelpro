@@ -90,6 +90,35 @@ class FechaHorarioNo(db.Model):
     def __repr__(self):
         return f'<FechaHorarioNo {self.fecha}>'
 
+# Tabla: Configuracion (Configuración del sistema)
+class Configuracion(db.Model):
+    __tablename__ = 'configuracion'
+    id = db.Column(db.Integer, primary_key=True)
+    clave = db.Column(db.String(50), nullable=False, unique=True)
+    valor = db.Column(db.String(255))
+    
+    def __repr__(self):
+        return f'<Configuracion {self.clave}={self.valor}>'
+
+# Tabla: Conversacion (Historial de mensajes)
+class Conversacion(db.Model):
+    __tablename__ = 'conversacion'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    fecha = db.Column(db.DateTime, nullable=False, default=db.func.current_timestamp())
+    usuario = db.Column(db.String(50), nullable=False)  # Número de teléfono o '99999999' para local
+    rol = db.Column(db.String(20), nullable=False)  # 'user' o 'assistant'
+    mensaje = db.Column(db.Text, nullable=False)
+    
+    def __repr__(self):
+        return f'<Conversacion {self.usuario} - {self.rol}>'
+    
+    def to_dict(self):
+        """Convierte el mensaje al formato de OpenAI"""
+        return {
+            'role': self.rol,
+            'content': self.mensaje
+        }
+
 # Función para crear todas las tablas
 def crear_tablas(app):
     with app.app_context():
@@ -120,6 +149,19 @@ def crear_tablas(app):
         
         db.session.commit()
         print("Horarios predeterminados insertados")
+        
+        # Insertar configuración predeterminada si no existe
+        configs_predeterminadas = [
+            {'clave': 'cbu', 'valor': ''},
+            {'clave': 'alias', 'valor': ''}
+        ]
+        for config in configs_predeterminadas:
+            if not Configuracion.query.filter_by(clave=config['clave']).first():
+                nueva_config = Configuracion(clave=config['clave'], valor=config['valor'])
+                db.session.add(nueva_config)
+        
+        db.session.commit()
+        print("Configuración predeterminada insertada (CBU y Alias)")
 
 if __name__ == '__main__':
     from flask import Flask
