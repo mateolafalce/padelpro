@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from ai import chat_with_assistant
 from bd import db, Cancha, CanchaHorario, Horario
 from datetime import datetime, timedelta
-from abml_reservas import verificar_disponibilidad, crear_reserva
+from abml_reservas import verificar_disponibilidad, crear_reserva, listar_reservas_usuario, cancelar_reserva_usuario
 from historial_utils import guardar_mensaje, obtener_historial, limpiar_historial_antiguo
 
 chat_bp = Blueprint('chat', __name__, url_prefix='/api/chat')
@@ -57,7 +57,10 @@ def send_message():
             canchas_info,
             conversation_history,
             verificar_disponibilidad_func=verificar_disponibilidad,
-            crear_reserva_func=crear_reserva
+            crear_reserva_func=crear_reserva,
+            listar_reservas_func=listar_reservas_usuario,
+            cancelar_reserva_func=cancelar_reserva_usuario,
+            usuario=usuario
         )
         
         # Guardar la respuesta del asistente en la BD

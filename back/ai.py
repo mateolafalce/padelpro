@@ -123,6 +123,12 @@ Podés hacer la transferencia de $[MONTO] al CBU:
 o usando el Alias:
 
 {alias_actual}
+- CANCELACIÓN DE RESERVAS: Si el usuario quiere cancelar una reserva, seguí estos pasos:
+  1. Primero, usa la función listar_reservas_usuario para mostrarle sus reservas activas
+  2. Presentá las reservas de forma clara (ID, Cancha, Fecha, Hora)
+  3. Preguntá cuál reserva quiere cancelar (por ID o por descripción)
+  4. Una vez que el usuario confirme, usa la función cancelar_reserva_usuario con el ID de la reserva
+  5. Confirmá que la cancelación fue exitosa
 - Sé proactivo en ayudar a encontrar alternativas si no hay disponibilidad.
 - Los horarios de reserva son ESTRICTOS y ÚNICOS. Debes usar EXACTAMENTE uno de los siguientes rangos para el parámetro 'hora' en las funciones:
   {chr(10).join(['  • ' + h for h in horarios_validos])}
@@ -215,6 +221,38 @@ def get_function_definitions():
                 },
                 "required": ["cancha_nombre", "fecha", "hora"]
             }
+        },
+        {
+            "name": "listar_reservas_usuario",
+            "description": "Lista todas las reservas pendientes (en estado 'iniciada') de un usuario. Usar cuando el usuario quiera ver sus reservas o antes de cancelar una.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "telefono": {
+                        "type": "string",
+                        "description": "Número de teléfono del usuario"
+                    }
+                },
+                "required": ["telefono"]
+            }
+        },
+        {
+            "name": "cancelar_reserva_usuario",
+            "description": "Cancela una reserva específica cambiando su estado de 'iniciada' a 'cancelada'. Usar solo después de confirmar con el usuario qué reserva quiere cancelar.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "reserva_id": {
+                        "type": "integer",
+                        "description": "ID de la reserva a cancelar"
+                    },
+                    "telefono": {
+                        "type": "string",
+                        "description": "Número de teléfono del usuario (para verificar que la reserva le pertenece)"
+                    }
+                },
+                "required": ["reserva_id", "telefono"]
+            }
         }
     ]
 
@@ -224,7 +262,10 @@ def chat_with_assistant(
     canchas: list[dict], 
     conversation_history: list[dict] = None,
     verificar_disponibilidad_func = None,
-    crear_reserva_func = None
+    crear_reserva_func = None,
+    listar_reservas_func = None,
+    cancelar_reserva_func = None,
+    usuario: str = None
 ) -> str:
     system_prompt = build_system_prompt(canchas)
     messages = [{"role": "system", "content": system_prompt}]
@@ -309,7 +350,20 @@ def chat_with_assistant(
                 if function_name == "verificar_disponibilidad" and verificar_disponibilidad_func:
                     function_response = verificar_disponibilidad_func(**function_args)
                 elif function_name == "crear_reserva" and crear_reserva_func:
+                    # Agregar el teléfono del usuario si está disponible
+                    if usuario and usuario != '99999999':
+                        function_args['telefono'] = usuario
                     function_response = crear_reserva_func(**function_args)
+                elif function_name == "listar_reservas_usuario" and listar_reservas_func:
+                    # Si no se proporcionó teléfono en los args, usar el del usuario actual
+                    if 'telefono' not in function_args and usuario:
+                        function_args['telefono'] = usuario
+                    function_response = listar_reservas_func(**function_args)
+                elif function_name == "cancelar_reserva_usuario" and cancelar_reserva_func:
+                    # Si no se proporcionó teléfono en los args, usar el del usuario actual
+                    if 'telefono' not in function_args and usuario:
+                        function_args['telefono'] = usuario
+                    function_response = cancelar_reserva_func(**function_args)
                 else:
                     function_response = {"error": "Función no disponible"}
                 

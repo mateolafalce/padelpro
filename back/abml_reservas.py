@@ -129,10 +129,106 @@ def crear_reserva(cancha_nombre: str, fecha: str, hora: str, cliente_nombre: str
 			'exito': True,
 			'reserva_id': nueva_reserva.id,
 			'mensaje': f'¡Reserva confirmada! Cancha {cancha_nombre} el {fecha} a las {hora_final}. Monto: ${cancha.precio}'
+			}
+	except Exception as e:
+		db.session.rollback()
+		return {'exito': False, 'error': str(e)}
+
+
+def listar_reservas_usuario(telefono: str = None):
+	"""Lista las reservas activas (no canceladas) de un usuario"""
+	try:
+		if not telefono:
+			return {'exito': False, 'error': 'Se requiere el teléfono del usuario'}
+		
+		# Buscar el cliente por teléfono
+		cliente = Cliente.query.filter_by(telefono=str(telefono)).first()
+		if not cliente:
+			return {
+				'exito': True,
+				'reservas': [],
+				'mensaje': 'No se encontraron reservas para este número de teléfono'
+			}
+		
+		# Obtener reservas en estado 'iniciada' del cliente
+		reservas = (
+			Reserva.query
+			.filter_by(cliente_id=cliente.id)
+			.join(Estado, Reserva.estado_id == Estado.id)
+			.filter(Estado.nombre == 'iniciada')
+			.order_by(Reserva.fecha, Reserva.hora)
+			.all()
+		)
+		
+		if not reservas:
+			return {
+				'exito': True,
+				'reservas': [],
+				'mensaje': 'No tenés reservas pendientes'
+			}
+		
+		# Formatear las reservas
+		reservas_info = []
+		for r in reservas:
+			cancha = Cancha.query.get(r.cancha_id)
+			estado = Estado.query.get(r.estado_id)
+			reservas_info.append({
+				'id': r.id,
+				'cancha': cancha.nombre if cancha else 'Desconocida',
+				'fecha': r.fecha.strftime('%d/%m/%Y'),
+				'hora': r.hora,
+				'monto': r.monto,
+				'estado': estado.nombre if estado else 'Desconocido'
+			})
+		
+		return {
+			'exito': True,
+			'reservas': reservas_info,
+			'mensaje': f'Encontramos {len(reservas_info)} reserva(s) pendiente(s)'
+		}
+	except Exception as e:
+		return {'exito': False, 'error': str(e)}
+
+
+def cancelar_reserva_usuario(reserva_id: int, telefono: str = None):
+	"""Cancela una reserva cambiando su estado de 'iniciada' a 'cancelada'"""
+	try:
+		# Buscar la reserva
+		reserva = Reserva.query.get(reserva_id)
+		if not reserva:
+			return {'exito': False, 'error': f'No se encontró la reserva con ID {reserva_id}'}
+		
+		# Verificar que la reserva pertenece al usuario (si se proporciona teléfono)
+		if telefono:
+			cliente = Cliente.query.get(reserva.cliente_id)
+			if not cliente or cliente.telefono != str(telefono):
+				return {'exito': False, 'error': 'Esta reserva no te pertenece'}
+		
+		# Verificar que la reserva no esté ya cancelada
+		estado_actual = Estado.query.get(reserva.estado_id)
+		if estado_actual and estado_actual.nombre == 'cancelada':
+			return {'exito': False, 'error': 'Esta reserva ya está cancelada'}
+		
+		# Cambiar el estado a cancelada
+		estado_cancelada = Estado.query.filter_by(nombre='cancelada').first()
+		if not estado_cancelada:
+			return {'exito': False, 'error': 'No se encontró el estado "cancelada" en el sistema'}
+		
+		reserva.estado_id = estado_cancelada.id
+		db.session.commit()
+		
+		# Obtener información de la reserva para el mensaje
+		cancha = Cancha.query.get(reserva.cancha_id)
+		fecha_formateada = reserva.fecha.strftime('%d/%m/%Y')
+		
+		return {
+			'exito': True,
+			'mensaje': f'Reserva cancelada exitosamente. Cancha {cancha.nombre if cancha else "Desconocida"} del {fecha_formateada} a las {reserva.hora}'
 		}
 	except Exception as e:
 		db.session.rollback()
 		return {'exito': False, 'error': str(e)}
+
 
 
 @reservas_bp.route('/', methods=['GET'])
