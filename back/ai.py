@@ -13,13 +13,22 @@ load_dotenv()
 api_key = os.getenv("OPENAI_API_KEY")
 model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 
-business_kind = os.getenv("BUSINESS_KIND", "PadelPro")
-business_name = os.getenv("BUSINESS_NAME", "Complejo de Padel")
-business_address = os.getenv("BUSINESS_ADDRESS", "69 entre 119 y 120")
-
-# Horarios válidos del sistema (rangos)
-HORARIOS_VALIDOS = ['08:00-09:00', '10:00-11:00', '12:00-13:00', '14:00-15:00', 
-                    '16:00-17:00', '18:00-19:00', '20:00-21:00', '22:00-23:00']
+def obtener_horarios_validos():
+    """Obtiene los horarios válidos únicos desde la base de datos"""
+    from bd import Horario
+    try:
+        # Obtener todos los horarios únicos de la tabla Horario
+        horarios = Horario.query.with_entities(Horario.hora).distinct().all()
+        # Extraer solo el valor de hora y ordenar
+        horarios_list = sorted([h.hora for h in horarios])
+        return horarios_list if horarios_list else []
+    except Exception as e:
+        print(f"Error al obtener horarios de la BD: {e}")
+        # Fallback a horarios por defecto si hay error
+        return ['08:00-09:00', '09:00-10:00', '10:00-11:00', '11:00-12:00', 
+                '12:00-13:00', '13:00-14:00', '14:00-15:00', '15:00-16:00',
+                '16:00-17:00', '17:00-18:00', '18:00-19:00', '19:00-20:00',
+                '20:00-21:00', '21:00-22:00', '22:00-23:00']
 
 if not api_key:
     raise RuntimeError("Missing required environment variable: OPENAI_API_KEY")
@@ -66,6 +75,9 @@ def build_system_prompt(canchas: list[dict]) -> str:
     fecha_actual = datetime.now().strftime('%Y-%m-%d')
     dia_actual = datetime.now().strftime('%A %d de %B de %Y')
     
+    # Obtener horarios válidos desde la BD
+    horarios_validos = obtener_horarios_validos()
+    
     # Obtener toda la configuración desde la base de datos
     from bd import Configuracion
     try:
@@ -77,16 +89,16 @@ def build_system_prompt(canchas: list[dict]) -> str:
         
         cbu_actual = cbu_config.valor if cbu_config and cbu_config.valor else ''
         alias_actual = alias_config.valor if alias_config and alias_config.valor else ''
-        business_name_actual = business_name_config.valor if business_name_config and business_name_config.valor else business_name
-        business_kind_actual = business_kind_config.valor if business_kind_config and business_kind_config.valor else business_kind
-        business_address_actual = business_address_config.valor if business_address_config and business_address_config.valor else business_address
+        business_name_actual = business_name_config.valor if business_name_config and business_name_config.valor else 'Complejo de Padel'
+        business_kind_actual = business_kind_config.valor if business_kind_config and business_kind_config.valor else 'PadelPro'
+        business_address_actual = business_address_config.valor if business_address_config and business_address_config.valor else '69 entre 119 y 120'
     except:
-        # Si hay error al consultar la BD, usar valores del .env
-        cbu_actual = os.getenv("CBU", "")
-        alias_actual = os.getenv("ALIAS", "")
-        business_name_actual = business_name
-        business_kind_actual = business_kind
-        business_address_actual = business_address
+        # Si hay error al consultar la BD, usar valores por defecto
+        cbu_actual = ''
+        alias_actual = ''
+        business_name_actual = 'Complejo de Padel'
+        business_kind_actual = 'PadelPro'
+        business_address_actual = '69 entre 119 y 120'
     
     system_prompt = f"""Eres un agente de atención al cliente para {business_name_actual}, un {business_kind_actual} ubicado en {business_address_actual}.
 
@@ -104,7 +116,9 @@ INSTRUCCIONES IMPORTANTES:
 - SOLO cuando el usuario confirme explícitamente (diga "sí", "confirmar", "dale", etc.), llama a la función crear_reserva.
 - Solo después de que crear_reserva retorne éxito, confirmá al cliente que la reserva fue completada. ADEMÁS, debes enviar un mensaje con el detalle del pago: Menciona el monto a pagar, el CBU ({cbu_actual}) y el Alias ({alias_actual}) para realizar la transferencia.
 - Sé proactivo en ayudar a encontrar alternativas si no hay disponibilidad.
-- Los horarios de reserva son ESTRICTOS y ÚNICOS. Debes usar EXACTAMENTE uno de los siguientes rangos para el parámetro 'hora' en las funciones: {", ".join(HORARIOS_VALIDOS)}. No inventes otros horarios ni uses formato HH:MM simple si puedes evitarlo.
+- Los horarios de reserva son ESTRICTOS y ÚNICOS. Debes usar EXACTAMENTE uno de los siguientes rangos para el parámetro 'hora' en las funciones:
+  {chr(10).join(['  • ' + h for h in horarios_validos])}
+  No inventes otros horarios ni uses formato HH:MM simple si puedes evitarlo.
 
 """
     
@@ -131,8 +145,9 @@ INSTRUCCIONES IMPORTANTES:
                     horarios_por_dia[dia].append(hora)
                 
                 for dia, horas in horarios_por_dia.items():
-                    horas_str = ', '.join(sorted(horas))
-                    system_prompt += f"      {dia}: {horas_str}\n"
+                    system_prompt += f"      {dia}:\n"
+                    for hora in sorted(horas):
+                        system_prompt += f"        • {hora}\n"
             else:
                 system_prompt += "   Horarios: No definidos aún\n"
             system_prompt += "\n"

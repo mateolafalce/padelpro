@@ -153,7 +153,10 @@ def crear_tablas(app):
         # Insertar configuración predeterminada si no existe
         configs_predeterminadas = [
             {'clave': 'cbu', 'valor': ''},
-            {'clave': 'alias', 'valor': ''}
+            {'clave': 'alias', 'valor': ''},
+            {'clave': 'business_name', 'valor': 'Complejo de Padel'},
+            {'clave': 'business_kind', 'valor': 'PadelPro'},
+            {'clave': 'business_address', 'valor': '69 entre 119 y 120'}
         ]
         for config in configs_predeterminadas:
             if not Configuracion.query.filter_by(clave=config['clave']).first():
@@ -161,7 +164,7 @@ def crear_tablas(app):
                 db.session.add(nueva_config)
         
         db.session.commit()
-        print("Configuración predeterminada insertada (CBU y Alias)")
+        print("Configuración predeterminada insertada (CBU, Alias y datos del negocio)")
 
 if __name__ == '__main__':
     from flask import Flask
