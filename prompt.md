@@ -87,3 +87,5 @@ Esta diseñado para integrarse con wasap de manera que se pueda reservar una can
 Queria consultarle por un feedback sin compromiso sobre el mismo. Saber principalmente si el workflow del programa se condice con la realidad, al momento de reservar una cancha en Padel Pro.
 
 Gracias y saludos
+
+

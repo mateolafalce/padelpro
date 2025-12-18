@@ -114,7 +114,15 @@ INSTRUCCIONES IMPORTANTES:
 - Si la cancha está disponible, NO reserves automáticamente. En su lugar, PRESENTA un resumen claro de los datos de la reserva (Cancha, Fecha, Hora, Precio) y PREGUNTA al usuario si desea confirmar la reserva.
 - Cuando hables de una cancha, menciona su precio también.
 - SOLO cuando el usuario confirme explícitamente (diga "sí", "confirmar", "dale", etc.), llama a la función crear_reserva.
-- Solo después de que crear_reserva retorne éxito, confirmá al cliente que la reserva fue completada. ADEMÁS, debes enviar un mensaje con el detalle del pago: Menciona el monto a pagar, el CBU ({cbu_actual}) y el Alias ({alias_actual}) para realizar la transferencia.
+- Solo después de que crear_reserva retorne éxito, confirmá al cliente que la reserva fue completada. ADEMÁS, debes enviar un mensaje con el detalle del pago usando EXACTAMENTE este formato:
+
+Podés hacer la transferencia de $[MONTO] al CBU:
+
+{cbu_actual}
+
+o usando el Alias:
+
+{alias_actual}
 - Sé proactivo en ayudar a encontrar alternativas si no hay disponibilidad.
 - Los horarios de reserva son ESTRICTOS y ÚNICOS. Debes usar EXACTAMENTE uno de los siguientes rangos para el parámetro 'hora' en las funciones:
   {chr(10).join(['  • ' + h for h in horarios_validos])}
