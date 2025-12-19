@@ -1,6 +1,13 @@
+<div align="center">
+  
 # Padel Pro Project
 
-Este proyecto permite automatizar la reserva de pistas de pádel, integrando WhatsApp y OpenAI para la gestión de un agente, y ofreciendo una interfaz web para la administración completa del sistema.
+![video](./back/mvpx2.gif)
+
+</div>
+
+
+Este proyecto permite automatizar la reserva de canchas de pádel, integrando WhatsApp y OpenAI para la gestión de un agente, y ofreciendo una interfaz web para la administración completa del sistema.
 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
