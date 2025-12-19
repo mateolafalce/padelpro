@@ -226,34 +226,25 @@ def get_function_definitions():
         },
         {
             "name": "listar_reservas_usuario",
-            "description": "Lista todas las reservas pendientes (en estado 'iniciada') de un usuario. Usar cuando el usuario quiera ver sus reservas o antes de cancelar una.",
+            "description": "Lista todas las reservas pendientes (en estado 'iniciada') del usuario actual. El sistema automáticamente identifica al usuario. Usar cuando el usuario quiera ver sus reservas o antes de cancelar una.",
             "parameters": {
                 "type": "object",
-                "properties": {
-                    "telefono": {
-                        "type": "string",
-                        "description": "Número de teléfono del usuario"
-                    }
-                },
-                "required": ["telefono"]
+                "properties": {},
+                "required": []
             }
         },
         {
             "name": "cancelar_reserva_usuario",
-            "description": "Cancela una reserva específica cambiando su estado de 'iniciada' a 'cancelada'. Usar solo después de confirmar con el usuario qué reserva quiere cancelar.",
+            "description": "Cancela una reserva específica del usuario actual cambiando su estado de 'iniciada' a 'cancelada'. El sistema automáticamente identifica al usuario. Usar solo después de confirmar con el usuario qué reserva quiere cancelar.",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "reserva_id": {
                         "type": "integer",
                         "description": "ID de la reserva a cancelar"
-                    },
-                    "telefono": {
-                        "type": "string",
-                        "description": "Número de teléfono del usuario (para verificar que la reserva le pertenece)"
                     }
                 },
-                "required": ["reserva_id", "telefono"]
+                "required": ["reserva_id"]
             }
         }
     ]
@@ -357,13 +348,13 @@ def chat_with_assistant(
                         function_args['telefono'] = usuario
                     function_response = crear_reserva_func(**function_args)
                 elif function_name == "listar_reservas_usuario" and listar_reservas_func:
-                    # Si no se proporcionó teléfono en los args, usar el del usuario actual
-                    if 'telefono' not in function_args and usuario:
+                    # SIEMPRE usar el teléfono del usuario actual, ignorar lo que el LLM envíe
+                    if usuario:
                         function_args['telefono'] = usuario
                     function_response = listar_reservas_func(**function_args)
                 elif function_name == "cancelar_reserva_usuario" and cancelar_reserva_func:
-                    # Si no se proporcionó teléfono en los args, usar el del usuario actual
-                    if 'telefono' not in function_args and usuario:
+                    # SIEMPRE usar el teléfono del usuario actual, ignorar lo que el LLM envíe
+                    if usuario:
                         function_args['telefono'] = usuario
                     function_response = cancelar_reserva_func(**function_args)
                 else:
