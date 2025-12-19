@@ -84,8 +84,10 @@ def crear_reserva(cancha_nombre: str, fecha: str, hora: str, cliente_nombre: str
 		# Buscar o crear cliente
 		cliente = None
 		if telefono:
+		    print(f"DEBUG crear_reserva: Buscando cliente con telefono={telefono}")
 		    cliente = Cliente.query.filter_by(telefono=str(telefono)).first()
 		    if cliente:
+	        print(f"DEBUG crear_reserva: Cliente encontrado: ID={cliente.id}, nombre={cliente.nombre}, telefono={cliente.telefono}")
 		        # FIX: Si el cliente ya existe y tiene el nombre "Cliente WhatsApp" (de pruebas anteriores),
 		        # lo actualizamos a la nueva preferencia (solo número).
 		        if cliente.nombre == "Cliente WhatsApp":
@@ -98,10 +100,11 @@ def crear_reserva(cancha_nombre: str, fecha: str, hora: str, cliente_nombre: str
 		        # Si no hay nombre, usar el teléfono como nombre para que aparezca "solo el numero"
 		        nombre_cliente = cliente_nombre if cliente_nombre else str(telefono)
 		        apellido_cliente = "WSP" if cliente_nombre else ""
-		             
+		        print(f"DEBUG crear_reserva: Creando nuevo cliente con telefono={telefono}, nombre={nombre_cliente}")
 		        cliente = Cliente(nombre=nombre_cliente, apellido=apellido_cliente, telefono=str(telefono), categoria=0)
 		        db.session.add(cliente)
 		        db.session.flush()
+		        print(f"DEBUG crear_reserva: Cliente creado con ID={cliente.id}")
 		else:
 		    # Buscar o crear cliente genérico
 		    cliente = Cliente.query.filter_by(nombre='Cliente', apellido='Generico').first()
@@ -138,17 +141,24 @@ def crear_reserva(cancha_nombre: str, fecha: str, hora: str, cliente_nombre: str
 def listar_reservas_usuario(telefono: str = None):
 	"""Lista las reservas activas (no canceladas) de un usuario"""
 	try:
+		print(f"DEBUG: listar_reservas_usuario llamado con telefono={telefono}")
+		
 		if not telefono:
 			return {'exito': False, 'error': 'Se requiere el teléfono del usuario'}
 		
 		# Buscar el cliente por teléfono
 		cliente = Cliente.query.filter_by(telefono=str(telefono)).first()
+		print(f"DEBUG: Cliente encontrado: {cliente}")
+		
 		if not cliente:
+			print(f"DEBUG: No se encontró cliente con telefono={telefono}")
 			return {
 				'exito': True,
 				'reservas': [],
 				'mensaje': 'No se encontraron reservas para este número de teléfono'
 			}
+		
+		print(f"DEBUG: Cliente ID={cliente.id}, nombre={cliente.nombre}, telefono={cliente.telefono}")
 		
 		# Obtener reservas en estado 'iniciada' del cliente
 		reservas = (
@@ -159,6 +169,8 @@ def listar_reservas_usuario(telefono: str = None):
 			.order_by(Reserva.fecha, Reserva.hora)
 			.all()
 		)
+		
+		print(f"DEBUG: Reservas encontradas: {len(reservas)}")
 		
 		if not reservas:
 			return {
@@ -181,12 +193,15 @@ def listar_reservas_usuario(telefono: str = None):
 				'estado': estado.nombre if estado else 'Desconocido'
 			})
 		
+		print(f"DEBUG: Reservas formateadas: {reservas_info}")
+		
 		return {
 			'exito': True,
 			'reservas': reservas_info,
 			'mensaje': f'Encontramos {len(reservas_info)} reserva(s) pendiente(s)'
 		}
 	except Exception as e:
+		print(f"DEBUG ERROR: {str(e)}")
 		return {'exito': False, 'error': str(e)}
 
 

@@ -125,6 +125,8 @@ def webhook():
                     from_number = message['from']
                     message_type = message['type']
                     
+                    print(f"DEBUG WSP: Mensaje recibido de número: {from_number}")
+                    
                     # Solo procesar mensajes de texto
                     if message_type != 'text':
                         send_whatsapp_message(
@@ -147,10 +149,12 @@ def webhook():
                     
                     # Wrapper para inyectar el teléfono en crear_reserva
                     def crear_reserva_wrapper(**kwargs):
+                         print(f"DEBUG WSP: crear_reserva_wrapper llamado con telefono={from_number}")
                          kwargs['telefono'] = from_number
                          return crear_reserva(**kwargs)
 
                     # Obtener respuesta del asistente
+                    print(f"DEBUG WSP: Llamando chat_with_assistant con usuario={from_number}")
                     response = chat_with_assistant(
                         user_message,
                         canchas_info,
