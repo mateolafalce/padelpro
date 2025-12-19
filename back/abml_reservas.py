@@ -213,15 +213,20 @@ def listar_reservas_usuario(telefono: str = None):
 def cancelar_reserva_usuario(reserva_id: int, telefono: str = None):
 	"""Cancela una reserva cambiando su estado de 'iniciada' a 'cancelada'"""
 	try:
+		logger.info(f"DEBUG: cancelar_reserva_usuario llamado con reserva_id={reserva_id}, telefono={telefono}")
 		# Buscar la reserva
 		reserva = Reserva.query.get(reserva_id)
+		logger.info(f"DEBUG: Reserva encontrada: {reserva}")
 		if not reserva:
+			logger.info(f"DEBUG: No se encontró reserva con ID={reserva_id}")
 			return {'exito': False, 'error': f'No se encontró la reserva con ID {reserva_id}'}
 		
 		# Verificar que la reserva pertenece al usuario (si se proporciona teléfono)
 		if telefono:
 			cliente = Cliente.query.get(reserva.cliente_id)
+			logger.info(f"DEBUG: Verificando propiedad - Cliente de la reserva: {cliente.telefono if cliente else 'None'}, Usuario actual: {telefono}")
 			if not cliente or cliente.telefono != str(telefono):
+				logger.info(f"DEBUG: La reserva no pertenece al usuario")
 				return {'exito': False, 'error': 'Esta reserva no te pertenece'}
 		
 		# Verificar que la reserva no esté ya cancelada
@@ -236,6 +241,7 @@ def cancelar_reserva_usuario(reserva_id: int, telefono: str = None):
 		
 		reserva.estado_id = estado_cancelada.id
 		db.session.commit()
+		logger.info(f"DEBUG: Reserva {reserva_id} cancelada exitosamente")
 		
 		# Obtener información de la reserva para el mensaje
 		cancha = Cancha.query.get(reserva.cancha_id)
