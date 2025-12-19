@@ -2,3 +2,4 @@
 .venv
 /back/.venv
 /back/__pycache__
+prompt.md
