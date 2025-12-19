@@ -72,9 +72,7 @@ chat quiero que implementes en la base de datos un modulo el cual se dedique a l
 
 TODO: 
 - Implementar sistema de pago basado en QR para poder cobrar mensualmente
-- Gestionar el historial de conversaciones haciendo uso de la base de datos
 - Listar de a X usuarios
-
 
 
 
@@ -87,5 +85,7 @@ Esta diseñado para integrarse con wasap de manera que se pueda reservar una can
 Queria consultarle por un feedback sin compromiso sobre el mismo. Saber principalmente si el workflow del programa se condice con la realidad, al momento de reservar una cancha en Padel Pro.
 
 Gracias y saludos
+
+https://padelpro.duckdns.org/
 
 

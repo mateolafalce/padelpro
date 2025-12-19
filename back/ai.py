@@ -124,11 +124,12 @@ o usando el Alias:
 
 {alias_actual}
 - CANCELACIÓN DE RESERVAS: Si el usuario quiere cancelar una reserva, seguí estos pasos:
-  1. Primero, usa la función listar_reservas_usuario para mostrarle sus reservas activas
+  1. Usa la función listar_reservas_usuario automáticamente (el sistema ya tiene su número de teléfono)
   2. Presentá las reservas de forma clara (ID, Cancha, Fecha, Hora)
   3. Preguntá cuál reserva quiere cancelar (por ID o por descripción)
   4. Una vez que el usuario confirme, usa la función cancelar_reserva_usuario con el ID de la reserva
   5. Confirmá que la cancelación fue exitosa
+  IMPORTANTE: NO le pidas al usuario su número de teléfono, el sistema ya lo tiene.
 - Sé proactivo en ayudar a encontrar alternativas si no hay disponibilidad.
 - Los horarios de reserva son ESTRICTOS y ÚNICOS. Debes usar EXACTAMENTE uno de los siguientes rangos para el parámetro 'hora' en las funciones:
   {chr(10).join(['  • ' + h for h in horarios_validos])}

@@ -4,7 +4,7 @@ import requests
 import json
 from ai import chat_with_assistant
 from bd import db, Cancha, CanchaHorario, Horario
-from abml_reservas import verificar_disponibilidad, crear_reserva
+from abml_reservas import verificar_disponibilidad, crear_reserva, listar_reservas_usuario, cancelar_reserva_usuario
 from historial_utils import guardar_mensaje, obtener_historial, limpiar_historial_antiguo
 
 wsp_bp = Blueprint('whatsapp', __name__, url_prefix='/api/whatsapp')
@@ -156,7 +156,10 @@ def webhook():
                         canchas_info,
                         conversation_history,
                         verificar_disponibilidad_func=verificar_disponibilidad,
-                        crear_reserva_func=crear_reserva_wrapper
+                        crear_reserva_func=crear_reserva_wrapper,
+                        listar_reservas_func=listar_reservas_usuario,
+                        cancelar_reserva_func=cancelar_reserva_usuario,
+                        usuario=from_number
                     )
                     
                     # Guardar la respuesta del asistente en la BD
