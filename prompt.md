@@ -73,7 +73,7 @@ chat quiero que implementes en la base de datos un modulo el cual se dedique a l
 TODO: 
 - Implementar sistema de pago basado en QR para poder cobrar mensualmente
 - Listar de a X usuarios
-
+- Que guardar configuracion aparezca abajo de todo
 
 
 Hola Buenas Tardes. Mateo, un gusto
