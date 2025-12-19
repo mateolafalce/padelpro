@@ -73,8 +73,7 @@ chat quiero que implementes en la base de datos un modulo el cual se dedique a l
 TODO: 
 - Implementar sistema de pago basado en QR para poder cobrar mensualmente
 - Listar de a X usuarios
-- Que guardar configuracion aparezca abajo de todo
-
+- Implementar un modulo que permita limitar las reservas o notificar cosas a los cliente en lenguaje natural
 
 Hola Buenas Tardes. Mateo, un gusto
 
@@ -86,6 +85,6 @@ Queria consultarle por un feedback sin compromiso sobre el mismo. Saber principa
 
 Gracias y saludos
 
-https://padelpro.duckdns.org/
+https://lacuevapadel.duckdns.org/
 
 
