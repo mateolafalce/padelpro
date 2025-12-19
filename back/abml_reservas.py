@@ -87,7 +87,7 @@ def crear_reserva(cancha_nombre: str, fecha: str, hora: str, cliente_nombre: str
 		    print(f"DEBUG crear_reserva: Buscando cliente con telefono={telefono}")
 		    cliente = Cliente.query.filter_by(telefono=str(telefono)).first()
 		    if cliente:
-	        print(f"DEBUG crear_reserva: Cliente encontrado: ID={cliente.id}, nombre={cliente.nombre}, telefono={cliente.telefono}")
+		        print(f"DEBUG crear_reserva: Cliente encontrado: ID={cliente.id}, nombre={cliente.nombre}, telefono={cliente.telefono}")
 		        # FIX: Si el cliente ya existe y tiene el nombre "Cliente WhatsApp" (de pruebas anteriores),
 		        # lo actualizamos a la nueva preferencia (solo número).
 		        if cliente.nombre == "Cliente WhatsApp":
