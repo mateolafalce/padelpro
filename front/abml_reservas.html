@@ -225,6 +225,7 @@
 
     <div class="card" style="margin-top:20px;">
       <h2>Listado de Reservas</h2>
+      <div style="margin-bottom: 10px; color: #555;" id="info-paginacion"></div>
       <table>
         <thead>
           <tr>
@@ -241,6 +242,11 @@
         <tbody id="tabla-reservas"></tbody>
       </table>
       <div class="actions" style="margin-top:12px;">
+        <button class="light" id="btn-primera" disabled>« Primera</button>
+        <button class="light" id="btn-anterior" disabled>‹ Anterior</button>
+        <span style="padding: 0 10px; align-self: center;" id="pagina-actual">Página 1</span>
+        <button class="light" id="btn-siguiente" disabled>Siguiente ›</button>
+        <button class="light" id="btn-ultima" disabled>Última »</button>
         <button class="light" id="btn-refrescar">Refrescar</button>
       </div>
     </div>
@@ -250,6 +256,9 @@
 
   <script>
     const API = '/api/reservas';
+    let currentPage = 1;
+    let totalPages = 1;
+    
     const toast = (msg, ok = true) => {
       const el = document.getElementById('toast');
       el.textContent = msg;
@@ -264,11 +273,29 @@
       return `<span class="badge ${cls}">${estado}</span>`;
     };
 
-    async function listar() {
+    async function listar(page = 1) {
       try {
-        const r = await fetch(`${API}/`);
+        const r = await fetch(`${API}/?page=${page}`);
         const j = await r.json();
         if (!j.success) throw new Error(j.error || 'Error al listar');
+        
+        // Actualizar variables de paginación
+        currentPage = j.page;
+        totalPages = j.pages;
+        
+        // Actualizar información de paginación
+        const infoPag = document.getElementById('info-paginacion');
+        infoPag.textContent = `Mostrando ${j.reservas.length} de ${j.total} reservas totales`;
+        
+        // Actualizar indicador de página
+        document.getElementById('pagina-actual').textContent = `Página ${currentPage} de ${totalPages}`;
+        
+        // Actualizar botones
+        document.getElementById('btn-primera').disabled = !j.has_prev;
+        document.getElementById('btn-anterior').disabled = !j.has_prev;
+        document.getElementById('btn-siguiente').disabled = !j.has_next;
+        document.getElementById('btn-ultima').disabled = !j.has_next;
+        
         const tbody = document.getElementById('tabla-reservas');
         tbody.innerHTML = j.reservas.map(x => `
           <tr>
@@ -374,7 +401,11 @@
       } catch (e) { toast(e.message, false); }
     }
 
-    document.getElementById('btn-refrescar').addEventListener('click', listar);
+    document.getElementById('btn-refrescar').addEventListener('click', () => listar(currentPage));
+    document.getElementById('btn-primera').addEventListener('click', () => listar(1));
+    document.getElementById('btn-anterior').addEventListener('click', () => listar(currentPage - 1));
+    document.getElementById('btn-siguiente').addEventListener('click', () => listar(currentPage + 1));
+    document.getElementById('btn-ultima').addEventListener('click', () => listar(totalPages));
     document.getElementById('btn-disponibilidad').addEventListener('click', disponibilidad);
     document.getElementById('btn-crear').addEventListener('click', crear);
     document.getElementById('btn-actualizar').addEventListener('click', actualizar);

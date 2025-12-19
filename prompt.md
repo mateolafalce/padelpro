@@ -72,16 +72,16 @@ chat quiero que implementes en la base de datos un modulo el cual se dedique a l
 
 TODO: 
 - Implementar sistema de pago basado en QR para poder cobrar mensualmente
-- Listar de a X usuarios
 - Implementar un modulo que permita limitar las reservas o notificar cosas a los cliente en lenguaje natural
+- Implemnetar logica para cambiar de estado una vez que el horario del sistema sea mayor a los horarios de las reservas con estado iniciada
 
 Hola Buenas Tardes. Mateo, un gusto
 
-Queria acercarles este prototipo que hice para la gestion de canchas inspirado en su complejo.
+Queria acercarle este prototipo que hice para la gestion de canchas de padel inspirado en su complejo.
 
 Esta diseñado para integrarse con wasap de manera que se pueda reservar una cancha desde el mismo celu (+ web para la gestion de todo el sistema)
 
-Queria consultarle por un feedback sin compromiso sobre el mismo. Saber principalmente si el workflow del programa se condice con la realidad, al momento de reservar una cancha en Padel Pro.
+Queria consultarle por un feedback sin compromiso sobre el mismo. Saber principalmente si el workflow del programa se condice con la realidad, al momento de reservar una cancha en La Cueva Padel.
 
 Gracias y saludos
 

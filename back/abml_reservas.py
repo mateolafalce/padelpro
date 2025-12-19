@@ -260,7 +260,17 @@ def cancelar_reserva_usuario(reserva_id: int, telefono: str = None):
 @reservas_bp.route('/', methods=['GET'])
 def listar_reservas():
 	try:
-		reservas = Reserva.query.order_by(Reserva.fecha, Reserva.hora).all()
+		# Obtener parámetros de paginación
+		page = request.args.get('page', 1, type=int)
+		per_page = 20  # 20 reservas por página
+		
+		# Ordenar de más nuevas a más antiguas (descendente)
+		query = Reserva.query.order_by(Reserva.fecha.desc(), Reserva.hora.desc())
+		
+		# Aplicar paginación
+		pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+		reservas = pagination.items
+		
 		data = []
 		for r in reservas:
 			estado = Estado.query.get(r.estado_id)
@@ -275,7 +285,17 @@ def listar_reservas():
 				'estado': estado.nombre if estado else None,
 				'monto': r.monto
 			})
-		return jsonify({'success': True, 'reservas': data}), 200
+		
+		return jsonify({
+			'success': True, 
+			'reservas': data,
+			'page': page,
+			'per_page': per_page,
+			'total': pagination.total,
+			'pages': pagination.pages,
+			'has_next': pagination.has_next,
+			'has_prev': pagination.has_prev
+		}), 200
 	except Exception as e:
 		return jsonify({'success': False, 'error': str(e)}), 500
 
