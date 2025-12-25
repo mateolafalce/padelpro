@@ -2,8 +2,8 @@
 Blueprint para gestionar el historial de conversaciones
 """
 from flask import Blueprint, request, jsonify
-from bd import db, Conversacion
-from historial_utils import obtener_estadisticas_usuario, obtener_historial
+from app.models import db, Conversacion
+from app.services.historial_utils import obtener_estadisticas_usuario, obtener_historial
 from sqlalchemy import func
 
 historial_bp = Blueprint('historial', __name__, url_prefix='/api/historial')

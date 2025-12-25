@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from bd import db, Configuracion
+from app.models import db, Configuracion
 import os
 
 admin_bp = Blueprint('admin', __name__)

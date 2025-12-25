@@ -15,7 +15,7 @@ model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 
 def obtener_horarios_validos():
     """Obtiene los horarios válidos únicos desde la base de datos"""
-    from bd import Horario
+    from app.models import Horario
     try:
         # Obtener todos los horarios únicos de la tabla Horario
         horarios = Horario.query.with_entities(Horario.hora).distinct().all()
@@ -79,7 +79,7 @@ def build_system_prompt(canchas: list[dict]) -> str:
     horarios_validos = obtener_horarios_validos()
     
     # Obtener toda la configuración desde la base de datos
-    from bd import Configuracion
+    from app.models import Configuracion
     try:
         cbu_config = Configuracion.query.filter_by(clave='cbu').first()
         alias_config = Configuracion.query.filter_by(clave='alias').first()

@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from bd import db, Cancha, Horario, CanchaHorario, Reserva
+from app.models import db, Cancha, Horario, CanchaHorario, Reserva
 from datetime import datetime, timedelta
 
 canchas_bp = Blueprint('canchas', __name__, url_prefix='/canchas')

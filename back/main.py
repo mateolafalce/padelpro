@@ -4,14 +4,14 @@ import os
 
 load_dotenv()
 
-from bd import db
-from abml_canchas import canchas_bp
-from chat_bp import chat_bp
-from abml_reservas import reservas_bp
-from cancelar_horario import cancelar_bp
-from wsp import wsp_bp
-from admin_config import admin_bp
-from historial_bp import historial_bp
+from app.models import db
+from app.blueprints.canchas.routes import canchas_bp
+from app.blueprints.chat.routes import chat_bp
+from app.blueprints.reservas.routes import reservas_bp
+from app.blueprints.cancelar.routes import cancelar_bp
+from app.blueprints.whatsapp.routes import wsp_bp
+from app.blueprints.admin.routes import admin_bp
+from app.blueprints.historial.routes import historial_bp
 
 app = Flask(__name__)
 
@@ -30,8 +30,8 @@ app.register_blueprint(wsp_bp)
 app.register_blueprint(admin_bp)
 app.register_blueprint(historial_bp)
 
-# Ruta a la carpeta front
-FRONT_FOLDER = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'front')
+# Ruta a la carpeta front/pages
+FRONT_FOLDER = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'front', 'pages')
 
 @app.route('/')
 def home():

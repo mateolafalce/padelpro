@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from datetime import datetime
 import logging
-from bd import db, Cancha, Reserva, Cliente, Estado
+from app.models import db, Cancha, Reserva, Cliente, Estado
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)

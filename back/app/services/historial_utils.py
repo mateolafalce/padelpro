@@ -1,7 +1,7 @@
 """
 Utilidades para gestionar el historial de conversaciones
 """
-from bd import db, Conversacion
+from app.models import db, Conversacion
 from datetime import datetime
 
 

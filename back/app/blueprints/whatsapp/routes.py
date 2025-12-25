@@ -3,10 +3,10 @@ import os
 import requests
 import json
 import logging
-from ai import chat_with_assistant
-from bd import db, Cancha, CanchaHorario, Horario
-from abml_reservas import verificar_disponibilidad, crear_reserva, listar_reservas_usuario, cancelar_reserva_usuario
-from historial_utils import guardar_mensaje, obtener_historial, limpiar_historial_antiguo
+from app.services.ai import chat_with_assistant
+from app.models import db, Cancha, CanchaHorario, Horario
+from app.blueprints.reservas.routes import verificar_disponibilidad, crear_reserva, listar_reservas_usuario, cancelar_reserva_usuario
+from app.services.historial_utils import guardar_mensaje, obtener_historial, limpiar_historial_antiguo
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
@@ -211,7 +211,7 @@ def send_message():
 def clear_history(phone_number):
     """Limpiar historial de conversación de un número"""
     try:
-        from bd import Conversacion
+        from app.models import Conversacion
         # Eliminar todos los mensajes de este usuario
         Conversacion.query.filter_by(usuario=phone_number).delete()
         db.session.commit()

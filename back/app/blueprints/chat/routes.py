@@ -1,9 +1,9 @@
 from flask import Blueprint, request, jsonify
-from ai import chat_with_assistant
-from bd import db, Cancha, CanchaHorario, Horario
+from app.services.ai import chat_with_assistant
+from app.models import db, Cancha, CanchaHorario, Horario
 from datetime import datetime, timedelta
-from abml_reservas import verificar_disponibilidad, crear_reserva, listar_reservas_usuario, cancelar_reserva_usuario
-from historial_utils import guardar_mensaje, obtener_historial, limpiar_historial_antiguo
+from app.blueprints.reservas.routes import verificar_disponibilidad, crear_reserva, listar_reservas_usuario, cancelar_reserva_usuario
+from app.services.historial_utils import guardar_mensaje, obtener_historial, limpiar_historial_antiguo
 
 chat_bp = Blueprint('chat', __name__, url_prefix='/api/chat')
 

@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from datetime import datetime, timedelta
-from bd import db, Cancha, Horario, Reserva, Estado, Cliente
+from app.models import db, Cancha, Horario, Reserva, Estado, Cliente
 
 cancelar_bp = Blueprint('cancelar', __name__, url_prefix='/api/cancelar')
 

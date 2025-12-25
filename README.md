@@ -2,12 +2,38 @@
   
 # Padel Pro Project
 
-![video](./back/mvpx2.gif)
+![video](./back/app/static/mvpx2.gif)
 
 </div>
 
 
 Este proyecto permite automatizar la reserva de canchas de pádel, integrando WhatsApp y OpenAI para la gestión de un agente, y ofreciendo una interfaz web para la administración completa del sistema.
+
+## Estructura del Proyecto
+
+```
+padelpro/
+├── back/
+│   ├── app/
+│   │   ├── models/          # Modelos de base de datos
+│   │   ├── blueprints/      # Endpoints organizados por dominio
+│   │   ├── services/        # Lógica de negocio
+│   │   ├── config/          # Configuraciones
+│   │   └── static/          # Archivos estáticos
+│   ├── migrations/          # Scripts de migración de BD
+│   ├── scripts/             # Scripts de utilidad
+│   ├── docs/                # Documentación técnica
+│   ├── tests/               # Pruebas unitarias
+│   ├── main.py              # Punto de entrada
+│   └── requirements.txt
+├── front/
+│   ├── pages/               # Archivos HTML
+│   ├── static/              # CSS, JS, imágenes
+│   └── components/          # Componentes reutilizables
+└── .env.example             # Template de variables de entorno
+```
+
+## Instalación
 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
