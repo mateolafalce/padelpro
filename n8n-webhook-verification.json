@@ -1,0 +1,122 @@
+{
+    "name": "PadelPro WhatsApp Webhook Verification",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "GET",
+                "path": "whatsapp-webhook",
+                "responseMode": "responseNode",
+                "options": {}
+            },
+            "id": "webhook-verify",
+            "name": "WhatsApp Webhook Verify",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                250,
+                300
+            ],
+            "webhookId": "padelpro-whatsapp-verify"
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "string": [
+                        {
+                            "value1": "={{ $json.query['hub.mode'] }}",
+                            "operation": "equals",
+                            "value2": "subscribe"
+                        },
+                        {
+                            "value1": "={{ $json.query['hub.verify_token'] }}",
+                            "operation": "equals",
+                            "value2": "padelpro_verify_token_2024"
+                        }
+                    ]
+                },
+                "combineOperation": "all"
+            },
+            "id": "check-verify-token",
+            "name": "Verificar Token",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 1,
+            "position": [
+                450,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "respondWith": "text",
+                "responseBody": "={{ $json.query['hub.challenge'] }}",
+                "options": {
+                    "responseCode": 200
+                }
+            },
+            "id": "respond-challenge",
+            "name": "Responder Challenge",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1,
+            "position": [
+                650,
+                200
+            ]
+        },
+        {
+            "parameters": {
+                "respondWith": "text",
+                "responseBody": "Forbidden",
+                "options": {
+                    "responseCode": 403
+                }
+            },
+            "id": "respond-forbidden",
+            "name": "Responder Forbidden",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1,
+            "position": [
+                650,
+                400
+            ]
+        }
+    ],
+    "connections": {
+        "WhatsApp Webhook Verify": {
+            "main": [
+                [
+                    {
+                        "node": "Verificar Token",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Verificar Token": {
+            "main": [
+                [
+                    {
+                        "node": "Responder Challenge",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Responder Forbidden",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "settings": {
+        "executionOrder": "v1"
+    },
+    "staticData": null,
+    "tags": [],
+    "triggerCount": 1,
+    "updatedAt": "2026-01-25T13:45:34.000Z",
+    "versionId": "1"
+}

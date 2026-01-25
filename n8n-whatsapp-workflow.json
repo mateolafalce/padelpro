@@ -1,0 +1,1060 @@
+{
+  "name": "PadelPro WhatsApp Bot",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-webhook",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-receiver",
+      "name": "WhatsApp Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "padelpro-whatsapp"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.entry && $json.entry[0] && $json.entry[0].changes && $json.entry[0].changes[0] && $json.entry[0].changes[0].value && $json.entry[0].changes[0].value.messages }}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        }
+      },
+      "id": "validate-message",
+      "name": "Validar Mensaje",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "from_number",
+              "value": "={{ $json.entry[0].changes[0].value.messages[0].from }}"
+            },
+            {
+              "name": "user_message",
+              "value": "={{ $json.entry[0].changes[0].value.messages[0].text.body }}"
+            },
+            {
+              "name": "message_id",
+              "value": "={{ $json.entry[0].changes[0].value.messages[0].id }}"
+            },
+            {
+              "name": "message_type",
+              "value": "={{ $json.entry[0].changes[0].value.messages[0].type }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "extract-data",
+      "name": "Extraer Datos",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [650, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.message_type }}",
+              "operation": "equals",
+              "value2": "text"
+            }
+          ]
+        }
+      },
+      "id": "check-text-message",
+      "name": "Verificar Tipo Texto",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [850, 200]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO conversacion (usuario, rol, mensaje, timestamp) VALUES ('={{ $json.from_number }}', 'user', '={{ $json.user_message }}', NOW())",
+        "options": {}
+      },
+      "id": "save-user-message",
+      "name": "Guardar Mensaje Usuario",
+      "type": "n8n-nodes-base.mysql",
+      "typeVersion": 1,
+      "position": [1050, 100],
+      "credentials": {
+        "mysql": {
+          "id": "1",
+          "name": "PadelPro MySQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT rol, mensaje, timestamp FROM conversacion WHERE usuario = '={{ $json.from_number }}' ORDER BY timestamp DESC LIMIT 10",
+        "options": {}
+      },
+      "id": "get-history",
+      "name": "Obtener Historial",
+      "type": "n8n-nodes-base.mysql",
+      "typeVersion": 1,
+      "position": [1250, 100],
+      "credentials": {
+        "mysql": {
+          "id": "1",
+          "name": "PadelPro MySQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT c.id, c.nombre, c.descripcion, c.cantidad, c.precio, h.dia, h.hora FROM cancha c LEFT JOIN cancha_horario ch ON c.id = ch.cancha_id LEFT JOIN horario h ON ch.horario_id = h.id",
+        "options": {}
+      },
+      "id": "get-canchas",
+      "name": "Obtener Canchas",
+      "type": "n8n-nodes-base.mysql",
+      "typeVersion": 1,
+      "position": [1250, 300],
+      "credentials": {
+        "mysql": {
+          "id": "1",
+          "name": "PadelPro MySQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Procesar información de canchas\nconst canchasData = $input.all()[1].json;\nconst historialData = $input.all()[0].json;\nconst userData = $input.first().json;\n\n// Agrupar canchas con sus horarios\nconst canchasMap = {};\nfor (const row of canchasData) {\n  if (!canchasMap[row.nombre]) {\n    canchasMap[row.nombre] = {\n      nombre: row.nombre,\n      descripcion: row.descripcion || '',\n      cantidad: row.cantidad,\n      precio: row.precio,\n      horarios: []\n    };\n  }\n  if (row.dia && row.hora) {\n    canchasMap[row.nombre].horarios.push({\n      dia: row.dia,\n      hora: row.hora\n    });\n  }\n}\n\nconst canchasInfo = Object.values(canchasMap);\n\n// Formatear historial para OpenAI\nconst messages = [];\nfor (const msg of historialData.reverse()) {\n  messages.push({\n    role: msg.rol === 'user' ? 'user' : 'assistant',\n    content: msg.mensaje\n  });\n}\n\n// System prompt\nconst systemPrompt = `Eres un asistente virtual para reservas de canchas de pádel llamado PadelPro.\n\nCanchas disponibles:\n${JSON.stringify(canchasInfo, null, 2)}\n\nPuedes ayudar a los usuarios a:\n1. Verificar disponibilidad de canchas\n2. Crear reservas\n3. Listar sus reservas actuales\n4. Cancelar reservas\n\nSé amable, profesional y eficiente. Siempre confirma los detalles antes de crear una reserva.`;\n\nreturn {\n  json: {\n    from_number: userData.from_number,\n    user_message: userData.user_message,\n    system_prompt: systemPrompt,\n    messages: messages,\n    canchas_info: canchasInfo\n  }\n};"
+      },
+      "id": "prepare-context",
+      "name": "Preparar Contexto",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [1450, 200]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4",
+        "messages": {
+          "messageValues": [
+            {
+              "role": "system",
+              "content": "={{ $json.system_prompt }}"
+            },
+            {
+              "role": "user",
+              "content": "={{ $json.user_message }}"
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.7,
+          "maxTokens": 500,
+          "functions": {
+            "functionValues": [
+              {
+                "name": "verificar_disponibilidad",
+                "description": "Verifica si hay canchas disponibles para un día y hora específicos",
+                "parameters": {
+                  "type": "object",
+                  "properties": {
+                    "cancha": {
+                      "type": "string",
+                      "description": "Nombre de la cancha"
+                    },
+                    "dia": {
+                      "type": "string",
+                      "description": "Día de la semana (ej: Lunes, Martes)"
+                    },
+                    "hora": {
+                      "type": "string",
+                      "description": "Hora en formato HH:MM (ej: 18:00)"
+                    }
+                  },
+                  "required": ["cancha", "dia", "hora"]
+                }
+              },
+              {
+                "name": "crear_reserva",
+                "description": "Crea una nueva reserva de cancha",
+                "parameters": {
+                  "type": "object",
+                  "properties": {
+                    "cancha": {
+                      "type": "string",
+                      "description": "Nombre de la cancha"
+                    },
+                    "dia": {
+                      "type": "string",
+                      "description": "Día de la semana"
+                    },
+                    "hora": {
+                      "type": "string",
+                      "description": "Hora en formato HH:MM"
+                    },
+                    "nombre": {
+                      "type": "string",
+                      "description": "Nombre del cliente"
+                    }
+                  },
+                  "required": ["cancha", "dia", "hora", "nombre"]
+                }
+              },
+              {
+                "name": "listar_reservas",
+                "description": "Lista todas las reservas activas del usuario",
+                "parameters": {
+                  "type": "object",
+                  "properties": {},
+                  "required": []
+                }
+              },
+              {
+                "name": "cancelar_reserva",
+                "description": "Cancela una reserva existente",
+                "parameters": {
+                  "type": "object",
+                  "properties": {
+                    "reserva_id": {
+                      "type": "integer",
+                      "description": "ID de la reserva a cancelar"
+                    }
+                  },
+                  "required": ["reserva_id"]
+                }
+              }
+            ]
+          }
+        }
+      },
+      "id": "openai-chat",
+      "name": "OpenAI Assistant",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [1650, 200],
+      "credentials": {
+        "openAiApi": {
+          "id": "2",
+          "name": "OpenAI API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "rules",
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "string": [
+                  {
+                    "value1": "={{ $json.choices && $json.choices[0] && $json.choices[0].message && $json.choices[0].message.function_call && $json.choices[0].message.function_call.name }}",
+                    "operation": "equals",
+                    "value2": "verificar_disponibilidad"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "verificar"
+            },
+            {
+              "conditions": {
+                "string": [
+                  {
+                    "value1": "={{ $json.choices && $json.choices[0] && $json.choices[0].message && $json.choices[0].message.function_call && $json.choices[0].message.function_call.name }}",
+                    "operation": "equals",
+                    "value2": "crear_reserva"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "crear"
+            },
+            {
+              "conditions": {
+                "string": [
+                  {
+                    "value1": "={{ $json.choices && $json.choices[0] && $json.choices[0].message && $json.choices[0].message.function_call && $json.choices[0].message.function_call.name }}",
+                    "operation": "equals",
+                    "value2": "listar_reservas"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "listar"
+            },
+            {
+              "conditions": {
+                "string": [
+                  {
+                    "value1": "={{ $json.choices && $json.choices[0] && $json.choices[0].message && $json.choices[0].message.function_call && $json.choices[0].message.function_call.name }}",
+                    "operation": "equals",
+                    "value2": "cancelar_reserva"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "cancelar"
+            }
+          ]
+        },
+        "fallbackOutput": "respuesta_directa"
+      },
+      "id": "switch-function",
+      "name": "Determinar Acción",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [1850, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "const functionCall = $json.choices[0].message.function_call;\nconst args = JSON.parse(functionCall.arguments);\nconst fromNumber = $('Preparar Contexto').first().json.from_number;\n\nreturn {\n  json: {\n    from_number: fromNumber,\n    cancha: args.cancha,\n    dia: args.dia,\n    hora: args.hora\n  }\n};"
+      },
+      "id": "parse-verificar",
+      "name": "Parse Verificar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [2050, 50]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT c.cantidad, (SELECT COUNT(*) FROM reserva r WHERE r.cancha_id = c.id AND r.dia = '={{ $json.dia }}' AND r.hora = '={{ $json.hora }}' AND r.estado = 'confirmada') as ocupadas FROM cancha c WHERE c.nombre = '={{ $json.cancha }}'",
+        "options": {}
+      },
+      "id": "check-availability",
+      "name": "Verificar Disponibilidad",
+      "type": "n8n-nodes-base.mysql",
+      "typeVersion": 1,
+      "position": [2250, 50],
+      "credentials": {
+        "mysql": {
+          "id": "1",
+          "name": "PadelPro MySQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $json;\nconst disponibles = data.cantidad - data.ocupadas;\nconst fromNumber = $('Parse Verificar').first().json.from_number;\nconst cancha = $('Parse Verificar').first().json.cancha;\nconst dia = $('Parse Verificar').first().json.dia;\nconst hora = $('Parse Verificar').first().json.hora;\n\nlet mensaje;\nif (disponibles > 0) {\n  mensaje = `✅ Hay ${disponibles} cancha(s) disponible(s) en ${cancha} para ${dia} a las ${hora}.`;\n} else {\n  mensaje = `❌ Lo siento, no hay canchas disponibles en ${cancha} para ${dia} a las ${hora}.`;\n}\n\nreturn {\n  json: {\n    from_number: fromNumber,\n    response: mensaje,\n    disponibles: disponibles\n  }\n};"
+      },
+      "id": "format-availability",
+      "name": "Formatear Disponibilidad",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [2450, 50]
+    },
+    {
+      "parameters": {
+        "jsCode": "const functionCall = $json.choices[0].message.function_call;\nconst args = JSON.parse(functionCall.arguments);\nconst fromNumber = $('Preparar Contexto').first().json.from_number;\n\nreturn {\n  json: {\n    from_number: fromNumber,\n    cancha: args.cancha,\n    dia: args.dia,\n    hora: args.hora,\n    nombre: args.nombre\n  }\n};"
+      },
+      "id": "parse-crear",
+      "name": "Parse Crear Reserva",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [2050, 200]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id FROM cancha WHERE nombre = '={{ $json.cancha }}'",
+        "options": {}
+      },
+      "id": "get-cancha-id",
+      "name": "Obtener ID Cancha",
+      "type": "n8n-nodes-base.mysql",
+      "typeVersion": 1,
+      "position": [2250, 200],
+      "credentials": {
+        "mysql": {
+          "id": "1",
+          "name": "PadelPro MySQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO reserva (cancha_id, dia, hora, nombre, telefono, estado, fecha_creacion) VALUES (={{ $json.id }}, '={{ $('Parse Crear Reserva').first().json.dia }}', '={{ $('Parse Crear Reserva').first().json.hora }}', '={{ $('Parse Crear Reserva').first().json.nombre }}', '={{ $('Parse Crear Reserva').first().json.from_number }}', 'confirmada', NOW())",
+        "options": {}
+      },
+      "id": "create-reservation",
+      "name": "Crear Reserva",
+      "type": "n8n-nodes-base.mysql",
+      "typeVersion": 1,
+      "position": [2450, 200],
+      "credentials": {
+        "mysql": {
+          "id": "1",
+          "name": "PadelPro MySQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const fromNumber = $('Parse Crear Reserva').first().json.from_number;\nconst cancha = $('Parse Crear Reserva').first().json.cancha;\nconst dia = $('Parse Crear Reserva').first().json.dia;\nconst hora = $('Parse Crear Reserva').first().json.hora;\nconst nombre = $('Parse Crear Reserva').first().json.nombre;\n\nconst mensaje = `✅ ¡Reserva confirmada!\n\n👤 Nombre: ${nombre}\n🎾 Cancha: ${cancha}\n📅 Día: ${dia}\n🕐 Hora: ${hora}\n\n¡Nos vemos en la cancha!`;\n\nreturn {\n  json: {\n    from_number: fromNumber,\n    response: mensaje\n  }\n};"
+      },
+      "id": "format-reservation",
+      "name": "Formatear Confirmación",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [2650, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "const fromNumber = $('Preparar Contexto').first().json.from_number;\n\nreturn {\n  json: {\n    from_number: fromNumber\n  }\n};"
+      },
+      "id": "parse-listar",
+      "name": "Parse Listar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [2050, 350]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT r.id, c.nombre as cancha, r.dia, r.hora, r.nombre, r.estado FROM reserva r JOIN cancha c ON r.cancha_id = c.id WHERE r.telefono = '={{ $json.from_number }}' AND r.estado = 'confirmada' ORDER BY r.dia, r.hora",
+        "options": {}
+      },
+      "id": "list-reservations",
+      "name": "Listar Reservas",
+      "type": "n8n-nodes-base.mysql",
+      "typeVersion": 1,
+      "position": [2250, 350],
+      "credentials": {
+        "mysql": {
+          "id": "1",
+          "name": "PadelPro MySQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const reservas = $input.all();\nconst fromNumber = $('Parse Listar').first().json.from_number;\n\nlet mensaje;\nif (reservas.length === 0) {\n  mensaje = '📋 No tienes reservas activas en este momento.';\n} else {\n  mensaje = '📋 Tus reservas activas:\\n\\n';\n  reservas.forEach((r, index) => {\n    mensaje += `${index + 1}. 🎾 ${r.json.cancha}\\n`;\n    mensaje += `   📅 ${r.json.dia} a las ${r.json.hora}\\n`;\n    mensaje += `   👤 ${r.json.nombre}\\n`;\n    mensaje += `   🆔 ID: ${r.json.id}\\n\\n`;\n  });\n}\n\nreturn {\n  json: {\n    from_number: fromNumber,\n    response: mensaje\n  }\n};"
+      },
+      "id": "format-list",
+      "name": "Formatear Lista",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [2450, 350]
+    },
+    {
+      "parameters": {
+        "jsCode": "const functionCall = $json.choices[0].message.function_call;\nconst args = JSON.parse(functionCall.arguments);\nconst fromNumber = $('Preparar Contexto').first().json.from_number;\n\nreturn {\n  json: {\n    from_number: fromNumber,\n    reserva_id: args.reserva_id\n  }\n};"
+      },
+      "id": "parse-cancelar",
+      "name": "Parse Cancelar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [2050, 500]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE reserva SET estado = 'cancelada' WHERE id = {{ $json.reserva_id }} AND telefono = '={{ $json.from_number }}'",
+        "options": {}
+      },
+      "id": "cancel-reservation",
+      "name": "Cancelar Reserva",
+      "type": "n8n-nodes-base.mysql",
+      "typeVersion": 1,
+      "position": [2250, 500],
+      "credentials": {
+        "mysql": {
+          "id": "1",
+          "name": "PadelPro MySQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const fromNumber = $('Parse Cancelar').first().json.from_number;\nconst reservaId = $('Parse Cancelar').first().json.reserva_id;\n\nconst mensaje = `✅ Reserva #${reservaId} cancelada exitosamente.\\n\\nSi necesitas hacer una nueva reserva, ¡no dudes en escribirme!`;\n\nreturn {\n  json: {\n    from_number: fromNumber,\n    response: mensaje\n  }\n};"
+      },
+      "id": "format-cancel",
+      "name": "Formatear Cancelación",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [2450, 500]
+    },
+    {
+      "parameters": {
+        "jsCode": "const fromNumber = $('Preparar Contexto').first().json.from_number;\nconst aiResponse = $json.choices[0].message.content;\n\nreturn {\n  json: {\n    from_number: fromNumber,\n    response: aiResponse\n  }\n};"
+      },
+      "id": "format-direct",
+      "name": "Respuesta Directa",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [2050, 650]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO conversacion (usuario, rol, mensaje, timestamp) VALUES ('={{ $json.from_number }}', 'assistant', '={{ $json.response }}', NOW())",
+        "options": {}
+      },
+      "id": "save-assistant-message",
+      "name": "Guardar Respuesta",
+      "type": "n8n-nodes-base.mysql",
+      "typeVersion": 1,
+      "position": [2850, 300],
+      "credentials": {
+        "mysql": {
+          "id": "1",
+          "name": "PadelPro MySQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v22.0/{{ $env.WHATSAPP_PHONE_NUMBER_ID }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "messaging_product",
+              "value": "whatsapp"
+            },
+            {
+              "name": "to",
+              "value": "={{ $json.from_number }}"
+            },
+            {
+              "name": "type",
+              "value": "text"
+            },
+            {
+              "name": "text",
+              "value": "={{ { \"body\": $json.response } }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "send-whatsapp",
+      "name": "Enviar WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [3050, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "3",
+          "name": "WhatsApp Bearer Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DELETE FROM conversacion WHERE usuario = '={{ $json.from_number }}' AND id NOT IN (SELECT id FROM (SELECT id FROM conversacion WHERE usuario = '={{ $json.from_number }}' ORDER BY timestamp DESC LIMIT 50) as keep)",
+        "options": {}
+      },
+      "id": "cleanup-history",
+      "name": "Limpiar Historial",
+      "type": "n8n-nodes-base.mysql",
+      "typeVersion": 1,
+      "position": [3250, 300],
+      "credentials": {
+        "mysql": {
+          "id": "1",
+          "name": "PadelPro MySQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"status\": \"ok\" } }}",
+        "options": {}
+      },
+      "id": "respond-ok",
+      "name": "Responder OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [3450, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"status\": \"ok\", \"message\": \"ignored\" } }}",
+        "options": {}
+      },
+      "id": "respond-ignored",
+      "name": "Responder Ignorado",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [650, 400]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "from_number",
+              "value": "={{ $json.from_number }}"
+            },
+            {
+              "name": "response",
+              "value": "Lo siento, solo puedo procesar mensajes de texto por ahora. 📝"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "non-text-response",
+      "name": "Respuesta No Texto",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [1050, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v22.0/{{ $env.WHATSAPP_PHONE_NUMBER_ID }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "messaging_product",
+              "value": "whatsapp"
+            },
+            {
+              "name": "to",
+              "value": "={{ $json.from_number }}"
+            },
+            {
+              "name": "type",
+              "value": "text"
+            },
+            {
+              "name": "text",
+              "value": "={{ { \"body\": $json.response } }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "send-non-text-message",
+      "name": "Enviar Mensaje No Texto",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1250, 400],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "3",
+          "name": "WhatsApp Bearer Token"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "WhatsApp Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validar Mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar Mensaje": {
+      "main": [
+        [
+          {
+            "node": "Extraer Datos",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder Ignorado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraer Datos": {
+      "main": [
+        [
+          {
+            "node": "Verificar Tipo Texto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar Tipo Texto": {
+      "main": [
+        [
+          {
+            "node": "Guardar Mensaje Usuario",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respuesta No Texto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar Mensaje Usuario": {
+      "main": [
+        [
+          {
+            "node": "Obtener Historial",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Obtener Canchas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obtener Historial": {
+      "main": [
+        [
+          {
+            "node": "Preparar Contexto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obtener Canchas": {
+      "main": [
+        [
+          {
+            "node": "Preparar Contexto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Contexto": {
+      "main": [
+        [
+          {
+            "node": "OpenAI Assistant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Assistant": {
+      "main": [
+        [
+          {
+            "node": "Determinar Acción",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Determinar Acción": {
+      "main": [
+        [
+          {
+            "node": "Parse Verificar",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Parse Crear Reserva",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Parse Listar",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Parse Cancelar",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respuesta Directa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Verificar": {
+      "main": [
+        [
+          {
+            "node": "Verificar Disponibilidad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar Disponibilidad": {
+      "main": [
+        [
+          {
+            "node": "Formatear Disponibilidad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatear Disponibilidad": {
+      "main": [
+        [
+          {
+            "node": "Guardar Respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Crear Reserva": {
+      "main": [
+        [
+          {
+            "node": "Obtener ID Cancha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obtener ID Cancha": {
+      "main": [
+        [
+          {
+            "node": "Crear Reserva",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear Reserva": {
+      "main": [
+        [
+          {
+            "node": "Formatear Confirmación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatear Confirmación": {
+      "main": [
+        [
+          {
+            "node": "Guardar Respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Listar": {
+      "main": [
+        [
+          {
+            "node": "Listar Reservas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Listar Reservas": {
+      "main": [
+        [
+          {
+            "node": "Formatear Lista",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatear Lista": {
+      "main": [
+        [
+          {
+            "node": "Guardar Respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Cancelar": {
+      "main": [
+        [
+          {
+            "node": "Cancelar Reserva",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cancelar Reserva": {
+      "main": [
+        [
+          {
+            "node": "Formatear Cancelación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatear Cancelación": {
+      "main": [
+        [
+          {
+            "node": "Guardar Respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respuesta Directa": {
+      "main": [
+        [
+          {
+            "node": "Guardar Respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar Respuesta": {
+      "main": [
+        [
+          {
+            "node": "Enviar WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Limpiar Historial",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limpiar Historial": {
+      "main": [
+        [
+          {
+            "node": "Responder OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respuesta No Texto": {
+      "main": [
+        [
+          {
+            "node": "Enviar Mensaje No Texto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar Mensaje No Texto": {
+      "main": [
+        [
+          {
+            "node": "Responder Ignorado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2026-01-25T13:45:34.000Z",
+  "versionId": "1"
+}

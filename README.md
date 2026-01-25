@@ -58,3 +58,22 @@ sudo systemctl daemon-reload
 sudo systemctl restart padelpro
 sudo systemctl status padelpro
 ```
+
+## N8N Implementation
+
+```mermaid
+graph LR
+    A[WhatsApp] --> B[n8n Webhook]
+    B --> C[Procesar Mensaje]
+    C --> D[Consultar BD Canchas]
+    C --> E[OpenAI Assistant]
+    E --> F[Ejecutar Acción]
+    F --> G[Verificar Disponibilidad]
+    F --> H[Crear Reserva]
+    F --> I[Cancelar Reserva]
+    F --> J[Listar Reservas]
+    G --> K[Responder WhatsApp]
+    H --> K
+    I --> K
+    J --> K
+```
